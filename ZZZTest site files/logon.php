@@ -9,7 +9,7 @@
         $username = $_POST['username'];
         $password = $_POST['password'];
 
-        $query = "SELECT id, username FROM users WHERE username = ? AND password = SHA(?) LIMIT 1";
+        $query = "SELECT id, username FROM users WHERE username = ? AND password = SHA(?) ";
         $statement = $databaseConnection->prepare($query);
         $statement->bind_param('ss', $username, $password);
 

@@ -1,12 +1,12 @@
-<?php 
-    require_once ("Includes/simpledb-config.php"); 
-    require_once  ("Includes/connectDB.php");
-    include("Includes/header.php");         
-?>
+    <?php 
+        require_once ("Includes/simplecms-config.php"); 
+        require_once  ("Includes/connectDB.php");
+        include("Includes/header.php");         
+     ?>
 
 
     <div id="main">
-    <h3>Welcome to the timecard system.</h3>
+    <h3>Get started with your website</h3>
 
     <ol class="round">
         <li class="one">
@@ -27,6 +27,8 @@
 
     </div>
 
+</div> <!-- End of outer-wrapper which opens in header.php -->
+
 <?php 
     include ("Includes/footer.php");
-?>
+ ?>

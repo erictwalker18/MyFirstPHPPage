@@ -1,5 +1,5 @@
 <?php
-    require_once ("/Includes/simpledb-config.php");
+    require_once ("/Includes/simplecms-config.php");
     require_once ("/Functions/database.php");
 
     // Create database connection
