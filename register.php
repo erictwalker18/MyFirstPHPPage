@@ -1,19 +1,29 @@
-<?php 
+<?php
     require_once ("Includes/session.php");
-    require_once ("Includes/simplecms-config.php"); 
+    require_once ("Includes/simpledb-config.php"); 
     require_once ("Includes/connectDB.php");
-    include ("Includes/header.php");
+    include("Includes/header.php");
 
     if (isset($_POST['submit']))
     {
+        $lastname = $_POST['last_name'];
+        $firstname = $_POST['first_name'];
         $username = $_POST['username'];
         $password = $_POST['password'];
 
-        $query = "SELECT id, username FROM users WHERE username = ? AND password = ? ";
+        $query = "INSERT INTO people ";
         $statement = $databaseConnection->prepare($query);
-        echo $statement;
         $statement->bind_param('ss', $username, $password);
+        //needs work...
+        /*
+        Consider using tom's code for this?
 
+
+
+
+
+
+        */
         $statement->execute();
         $statement->store_result();
 
@@ -30,11 +40,19 @@
     }
 ?>
 <div id="main">
-    <h2>Log on</h2>
+    <h2>Register</h2>
         <form action="logon.php" method="post">
             <fieldset>
-            <legend>Log on</legend>
+            <legend>Register</legend>
             <ol>
+                <li>
+                    <label for="last_name">Last name:</label> 
+                    <input type="text" name="last_name" value="" id="last_name" />
+                </li>
+                <li>
+                    <label for="first_name">First name:</label> 
+                    <input type="text" name="first_name" value="" id="first_name" />
+                </li>
                 <li>
                     <label for="username">Username:</label> 
                     <input type="text" name="username" value="" id="username" />
@@ -51,5 +69,6 @@
         </fieldset>
     </form>
 </div>
-</div> <!-- End of outer-wrapper which opens in header.php -->
-<?php include ("Includes/footer.php"); ?>
+<?php
+    include("Includes/footer.php");  
+?>

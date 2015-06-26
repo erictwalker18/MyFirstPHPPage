@@ -27,6 +27,7 @@
                         else
                         {
                             echo '<li><a href="/logon.php">Login</a></li>' . "\n";
+                            echo '<li><a href="/register.php">Register</a></li>' . "\n";
                         }
                         ?>
                         </ul>
@@ -43,6 +44,7 @@
                     <nav>
                         <ul id="menu">
                             <li><a href="/index.php">Home</a></li>
+                            <li><a href="/uploadpage.php">Upload</a></li>
                         </ul>
                     </nav>
             </section>

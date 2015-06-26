@@ -1,17 +1,16 @@
-<?php 
+<?php
     require_once ("Includes/session.php");
-    require_once ("Includes/simplecms-config.php"); 
+    require_once ("Includes/simpledb-config.php"); 
     require_once ("Includes/connectDB.php");
-    include ("Includes/header.php");
+    include("Includes/header.php");
 
     if (isset($_POST['submit']))
     {
         $username = $_POST['username'];
         $password = $_POST['password'];
 
-        $query = "SELECT id, username FROM users WHERE username = ? AND password = ? ";
+        $query = "SELECT id, username FROM people WHERE username = ? AND password = SHA(?) ";
         $statement = $databaseConnection->prepare($query);
-        echo $statement;
         $statement->bind_param('ss', $username, $password);
 
         $statement->execute();
@@ -51,5 +50,6 @@
         </fieldset>
     </form>
 </div>
-</div> <!-- End of outer-wrapper which opens in header.php -->
-<?php include ("Includes/footer.php"); ?>
+<?php
+    include("Includes/footer.php");  
+?>

@@ -1,4 +1,10 @@
 <?php
+require_once("Functions/parser.php");
+require_once("Functions/database.php");
+include("Includes/header.php"); 
+?>
+<div id="main">
+<?php
 $target_dir = "Uploads/";
 $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
 $uploadOk = 1;
@@ -29,4 +35,12 @@ if ($uploadOk == 0) {
         echo "Sorry, there was an error uploading your file.";
     }
 }
+//parse, then delete
+parse_csv($target_file);
+unlink($target_file);
+echo "file was deleted!";
+?>
+</div>
+<?php
+include ("Includes/footer.php");
 ?>
