@@ -1,11 +1,9 @@
 <?php 
     require_once ("Includes/simpledb-config.php"); 
     require_once  ("Includes/connectDB.php");
-    include("Includes/header.php");         
+    include("Includes/header.php");
 ?>
 
-
-    <div id="main">
     <h3>Welcome to the timecard system.</h3>
 
     <ol class="round">
@@ -23,9 +21,6 @@
             </div>
          </li>
     </ol>
-
-
-    </div>
 
 <?php 
     include ("Includes/footer.php");

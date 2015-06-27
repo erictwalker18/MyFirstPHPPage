@@ -28,7 +28,6 @@
         }
     }
 ?>
-<div id="main">
     <h2>Log on</h2>
         <form action="logon.php" method="post">
             <fieldset>
@@ -49,7 +48,6 @@
             </p>
         </fieldset>
     </form>
-</div>
 <?php
     include("Includes/footer.php");  
 ?>

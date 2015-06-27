@@ -39,7 +39,6 @@
         }
     }
 ?>
-<div id="main">
     <h2>Register</h2>
         <form action="logon.php" method="post">
             <fieldset>
@@ -68,7 +67,6 @@
             </p>
         </fieldset>
     </form>
-</div>
 <?php
     include("Includes/footer.php");  
 ?>
