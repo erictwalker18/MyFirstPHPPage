@@ -35,7 +35,7 @@ function create_tables($databaseConnection)
 
 function db_save_person( $person )
 {
-	
+	global $databaseConnection;
 	
 	$person = prepare_person( $person );
 	$sql = create_save_sql( 'people', $person, 'person_id' );
@@ -46,7 +46,7 @@ function db_save_person( $person )
 
 function db_save_project( $project )
 {
-	
+	global $databaseConnection;
 	
 	$project = prepare_project( $project );
 	$sql = create_save_sql( 'projects', $project, 'project_id' );
@@ -57,7 +57,7 @@ function db_save_project( $project )
 
 function db_save_category( $cat )
 {
-	
+	global $databaseConnection;
 	
 	$cat = prepare_category( $cat );
 	$sql = create_save_sql( 'categories', $cat, 'category_id' );
@@ -68,7 +68,7 @@ function db_save_category( $cat )
 
 function db_save_hours( $hours )
 {
-	
+	global $databaseConnection;
 	
 	$hours = prepare_hours( $hours );
 	$sql = create_save_sql( 'hours', $hours, 'hours_id' );
@@ -83,6 +83,7 @@ function db_save_hours( $hours )
 
 function db_delete_person( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "DELETE FROM people WHERE person_id={$id}";
 	$databaseConnection->query($sql);
@@ -92,6 +93,7 @@ function db_delete_person( $id )
 
 function db_delete_project( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "DELETE FROM projects WHERE project_id={$id}";
 	$databaseConnection->query($sql);
@@ -101,6 +103,7 @@ function db_delete_project( $id )
 
 function db_delete_category( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "DELETE FROM categories WHERE category_id={$id}";
 	$databaseConnection->query($sql);
@@ -110,6 +113,7 @@ function db_delete_category( $id )
 
 function db_delete_hours( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "DELETE FROM hours WHERE hours_id={$id}";
 	$databaseConnection->query($sql);
@@ -119,11 +123,12 @@ function db_delete_hours( $id )
 
 function db_get_last_id( $table, $idfield )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM {$table} ORDER BY {$idfield} DESC";
 	$res = $databaseConnection->query($sql);
-	$row = mysqli_fetch_assoc( $res );
-	mysqli_free_result( $res );
+	$row = $res->fetch_assoc();
+	$res->free();
 	return $row[$idfield];
 }
 
@@ -131,9 +136,10 @@ function db_get_last_id( $table, $idfield )
 
 function db_get_person( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM people WHERE person_id={$id}";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	
 	if( $err = mysqli_error() )
 	{
@@ -144,8 +150,8 @@ function db_get_person( $id )
 	}
 	else
 	{
-		$row = mysqli_fetch_assoc( $res );
-		mysqli_free_result( $res );
+		$row = $res->fetch_assoc();
+		$res->free();
 	}
 	
 	return $row;
@@ -155,9 +161,10 @@ function db_get_person( $id )
 
 function db_get_project( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM projects WHERE project_id={$id}";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	
 	if( $err = mysqli_error() )
 	{
@@ -168,8 +175,8 @@ function db_get_project( $id )
 	}
 	else
 	{
-		$row = mysqli_fetch_assoc( $res );
-		mysqli_free_result( $res );
+		$row = $res->fetch_assoc();
+		$res->free();
 	}
 
 	return $row;
@@ -179,9 +186,10 @@ function db_get_project( $id )
 
 function db_get_category( $id )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM categories WHERE category_id={$id}";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	
 	if( $err = mysqli_error() )
 	{
@@ -192,8 +200,8 @@ function db_get_category( $id )
 	}
 	else
 	{
-		$row = mysqli_fetch_assoc( $res );
-		mysqli_free_result( $res );
+		$row = $res->fetch_assoc();
+		$res->free();
 	}
 	
 	return $row;
@@ -203,8 +211,9 @@ function db_get_category( $id )
 
 function db_get_people( $firstname = '', $lastname = '' )
 {
+    global $databaseConnection;
+
 	$people = array();
-	
 	
 	if( $firstname == '' )
 	{
@@ -217,21 +226,19 @@ function db_get_people( $firstname = '', $lastname = '' )
 			$sql = "SELECT * FROM people WHERE person_firstname='{$firstname}'";
 		}
 	}
-	else if( $lastname == '' )
+	elseif ( $lastname == '' )
 	{
-		$sql = "SELECT * FROM people WHERE person_lastname='{$firstname}'";
+		$sql = "SELECT * FROM people WHERE person_lastname='{$lastname}'";
 	}
 	else
 	{
-		$sql = "SELECT * FROM people WHERE person_firstname='{$firstname}' AND person_lastname='{$lastname}'";
+		$sql = "SELECT * FROM people WHERE person_firstname='{$firstname}' AND person_lastname = '{$lastname}'";
 	}
-	
-	$res = mysqli_query( $databaseConnection, $sql );
-	while( $row = mysqli_fetch_assoc( $res ) )
+    $res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
 	{
 		$people[$row['person_id']] = $row;
 	}
-	
 	return $people;
 }
 
@@ -239,11 +246,13 @@ function db_get_people( $firstname = '', $lastname = '' )
 
 function db_get_projects()
 {
+    global $databaseConnection;
+
 	$projects = array();
 	
 	$sql = "SELECT * FROM projects ORDER BY project_name";
-	$res = mysqli_query( $databaseConnection, $sql );
-	while( $row = mysqli_fetch_assoc( $res ) )
+	$res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
 	{
 		$projects[$row['project_id']] = $row;
 	}
@@ -255,11 +264,13 @@ function db_get_projects()
 
 function db_get_projects_in_category( $category_id )
 {
+    global $databaseConnection;
+
 	$projects = array();
 	
 	$sql = "SELECT * FROM projects WHERE category_id={$category_id} ORDER BY project_name";
-	$res = mysqli_query( $databaseConnection, $sql );
-	while( $row = mysqli_fetch_assoc( $res ) )
+	$res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
 	{
 		$projects[$row['project_id']] = $row;
 	}
@@ -271,11 +282,13 @@ function db_get_projects_in_category( $category_id )
 
 function db_get_categories()
 {
+    global $databaseConnection;
+
 	$cats = array();
 	
 	$sql = "SELECT * FROM categories ORDER BY category_name";
-	$res = mysqli_query( $databaseConnection, $sql );
-	while( $row = mysqli_fetch_assoc( $res ) )
+	$res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
 	{
 		$cats[$row['category_id']] = $row;
 	}
@@ -283,11 +296,20 @@ function db_get_categories()
 	return $cats;
 }
 
+function db_get_person_id($firstname, $lastname)
+{
+    foreach (db_get_people($firstname, $lastname) as $key => $val)
+    {
+        return $key;
+    }
+}
+
 function db_get_project_id( $name )
 {
-	$sql = "SELECT * FROM projects WHERE project_name={$name}";
-	$res = mysqli_query( $databaseConnection, $sql );
-	if( $err = mysqli_error() )
+    global $databaseConnection;
+	$sql = "SELECT * FROM projects WHERE project_name='{$name}'";
+    $res = $databaseConnection->query($sql);
+	if($res->num_rows == 0)
 	{
 		$row = array();
 		$row['project_id'] = -1;
@@ -296,17 +318,18 @@ function db_get_project_id( $name )
 	}
 	else
 	{
-		$row = mysqli_fetch_assoc( $res );
-		mysqli_free_result( $res );
+		$row = $res->fetch_assoc();
+		$res->free();
 	}
 	return $row;
 }
 
 function db_get_category_id( $name )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM categories WHERE category_name={$name}";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	
 	if( $err = mysqli_error() )
 	{
@@ -317,8 +340,8 @@ function db_get_category_id( $name )
 	}
 	else
 	{
-		$row = mysqli_fetch_assoc( $res );
-		mysqli_free_result( $res );
+		$row = $res->fetch_assoc();
+		$res->free();
 	}
 
 	return $row;
@@ -516,9 +539,10 @@ function create_update_sql( $table, $vals, $idfield )
 
 function db_get_hours_for_person( $pid )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE person_id={$pid} ORDER BY hours.date DESC";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	if( $err = mysqli_error() )
 	{
 		show_mysql_error( "$err: $sql" );
@@ -530,11 +554,12 @@ function db_get_hours_for_person( $pid )
 
 function db_get_hours_in_range( $pid, $startdate, $enddate )
 {
+    global $databaseConnection;
 	
 	$sdate = date( "Y-m-d", $startdate );
 	$edate = date( "Y-m-d", $enddate );
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE person_id={$pid} AND hours.date>='{$sdate}' AND hours.date<='{$edate}' ORDER BY hours.date DESC";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	if( $err = mysqli_error() )
 	{
 		show_mysql_error( "$err: $sql" );
@@ -546,9 +571,10 @@ function db_get_hours_in_range( $pid, $startdate, $enddate )
 
 function db_get_hours( $hours_id )
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id INNER JOIN people ON hours.person_id = people.person_id WHERE hours_id={$hours_id}";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	
 	if( $err = mysqli_error() )
 	{
@@ -557,7 +583,7 @@ function db_get_hours( $hours_id )
 	}
 	else
 	{
-		$row = mysqli_fetch_assoc( $res );
+		$row = $res->fetch_assoc();
 	}
 	
 	return $row;
@@ -567,9 +593,10 @@ function db_get_hours( $hours_id )
 
 function db_get_category_array()
 {
+    global $databaseConnection;
 	
 	$sql = "SELECT * FROM categories ORDER BY category_name ASC";
-	$res = mysqli_query( $databaseConnection, $sql );
+	$res = $databaseConnection->query($sql);
 	
 	$cats = array();
 	
@@ -579,12 +606,12 @@ function db_get_category_array()
 	}
 	else
 	{
-		while( $row = mysqli_fetch_assoc( $res ) )
+		while( $row = $res->fetch_assoc() )
 		{
 			$cats[$row['category_id']] = $row;
 		}
 		
-		mysqli_free_result( $res );
+		$res->free();
 	}
 	
 	return $cats;
@@ -601,6 +628,8 @@ function show_mysql_error( $err )
 
 function db_update_project( $id )
 {
+    global $databaseConnection;
+
 	$total_hours = 0;
 	
 	$sql = "SELECT * FROM hours WHERE project_id={$id} ORDER BY date DESC";
@@ -612,7 +641,7 @@ function db_update_project( $id )
 		show_mysql_error( "$err: $sql" );
 	}
 	
-	if( $row = mysqli_fetch_assoc( $res ) )
+	if( $row = $res->fetch_assoc() )
 	{
 		$total_hours += $row['hours'];
 		$sql = "UPDATE projects SET last_worked='{$row['date']}', last_worked_id={$row['person_id']}, ";
@@ -623,12 +652,12 @@ function db_update_project( $id )
 		$sql = "UPDATE projects SET last_worked='0-0-0', last_worked_id=0, ";
 	}
 	
-	while( $row = mysqli_fetch_assoc( $res ) )
+	while( $row = $res->fetch_assoc() )
 	{
 		$total_hours += $row['hours'];
 	}
 	$sql .= "total_hours={$total_hours} WHERE project_id={$id}";
-	mysqli_query( $sql );
+	$databaseConnection->query($sql);
 	if( $err = mysqli_error() )
 	{
 		show_mysql_error( "$err: $sql" );

@@ -37,8 +37,20 @@ function parse_csv($filename)
     //Goes through the lines of the file, forms an hours entry based on the content of the line.
     while (!feof($hours)){
         $currentLine = fgets($hours);
-        if ($currentLine == "")
+
+        //Check for deleted rows, common when messing with csv's in excel
+        $isNull = TRUE;
+        for ($i = 0; $i < $currentLine; $i++)
+        {
+            if (substr($currentLine, $i, 1) != ",")
+            {
+                $isNull = FALSE;
+                break;
+            }
+        }
+        if ($currentLine == "" || $isNull)
             break;
+
         $currentData = explode(",", $currentLine);
         $clean = array();
         for ($x=0; $x < sizeof($headers); $x++) {
@@ -47,10 +59,8 @@ function parse_csv($filename)
                 $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x]);
             }
         }
-        echo "<br>Prepared hours: ";
-        print_r( prepare_hours($clean));
+        db_save_hours($clean);
     }
-    echo "Exited the while loop";
     fclose($hours);
 }
 function parseItem($dataType, $data) 
@@ -66,15 +76,13 @@ function parseItem($dataType, $data)
         break;
 
         case "project_id":
-        //$clean .= db_get_project_id($data)['project_id'];
+        $tmp = db_get_project_id($data);
+        $clean .= $tmp['project_id'];
         break;
 
         case "person_id":
         list($firstname, $lastname) = explode(' ', $data);
-        $clean = db_get_people($firstname, $lastname);
-        print_r($clean[0]);
-        print_r(db_get_people($firstname, $lastname));
-        echo " is the name.<br>";
+        $clean = db_get_person_id($firstname, $lastname);
         break;
 
         case "hours":
@@ -90,7 +98,7 @@ function parseItem($dataType, $data)
         elseif ($data == "No")
             $clean .= 0;
         else
-            die("Incorrect input for billable. Requires 'Yes' or 'No' (without the quotes.)");
+            echo("Incorrect input for billable. Requires 'Yes' or 'No' (without the quotes.)");
         break;
 
         case "category":
@@ -98,7 +106,7 @@ function parseItem($dataType, $data)
         break;
 
         default:
-        die("This type of heading is not allowed: " . $dataType);
+            echo("This type of heading is not allowed: " . $dataType);
         break;
     }
     return $clean;
