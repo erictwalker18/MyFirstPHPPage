@@ -1,5 +1,5 @@
 <?php
-    require_once ("Includes/session.php");
+    require_once ("Includes/common.php");
     require_once ("Includes/simpledb-config.php"); 
     require_once ("Includes/connectDB.php");
     include("Includes/header.php");
@@ -8,18 +8,15 @@
     {
         $username = $_POST['username'];
         $password = $_POST['password'];
-
-        $query = "SELECT id, username FROM people WHERE username = ? AND password = SHA(?) ";
-        $statement = $databaseConnection->prepare($query);
-        $statement->bind_param('ss', $username, $password);
-
-        $statement->execute();
-        $statement->store_result();
-
-        if ($statement->num_rows == 1)
+        
+        $query = "SELECT person_id, username FROM people WHERE username = '{$username}' AND password = SHA('{$password}') ";
+        $res = $databaseConnection->query($query);
+        if ($res->num_rows == 1)
         {
-            $statement->bind_result($_SESSION['userid'], $_SESSION['username']);
-            $statement->fetch();
+            $row = $res->fetch_assoc();
+            $_SESSION['person_id'] = $row['person_id'];
+            $_SESSION['username'] = $row['username'];
+            set_user_session($_SESSION['person_id']);
             header ("Location: index.php");
         }
         else

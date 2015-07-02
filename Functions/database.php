@@ -16,19 +16,20 @@ function prep_DB_content ()
 */
 function create_tables($databaseConnection)
 {
-    $query_people = "CREATE TABLE IF NOT EXISTS people (person_id INT NOT NULL AUTO_INCREMENT, person_lastname VARCHAR(50), person_firstname VARCHAR(50), username VARCHAR(50), password CHAR(40), active BOOLEAN, admin BOOLEAN, PRIMARY KEY (person_id))";
+    $query_people = "CREATE TABLE IF NOT EXISTS people (person_id INT NOT NULL AUTO_INCREMENT, person_lastname VARCHAR(50), person_firstname VARCHAR(50), username VARCHAR(50), password CHAR(40), ";
+    $query_people .= "active BOOLEAN DEFAULT TRUE, admin BOOLEAN, current_project_id INT, PRIMARY KEY (person_id))";
     $databaseConnection->query($query_people);
     
-    $query_categories = "CREATE TABLE IF NOT EXISTS categories (category_id INT NOT NULL AUTO_INCREMENT, category_name VARCHAR(50), category_desc VARCHAR(500), active BOOLEAN, PRIMARY KEY (category_id))";
+    $query_categories = "CREATE TABLE IF NOT EXISTS categories (category_id INT NOT NULL AUTO_INCREMENT, category_name VARCHAR(50), category_desc VARCHAR(500), active BOOLEAN DEFAULT TRUE, PRIMARY KEY (category_id))";
     $databaseConnection->query($query_categories);
 
-    $query_projects = "CREATE TABLE IF NOT EXISTS projects (project_id INT NOT NULL AUTO_INCREMENT, project_name VARCHAR(50), project_desc VARCHAR(500), active BOOLEAN, category_id INT,";
-    $query_projects .=" last_worked DATE, last_worked_id INT,";
+    $query_projects = "CREATE TABLE IF NOT EXISTS projects (project_id INT NOT NULL AUTO_INCREMENT, project_name VARCHAR(50), project_desc VARCHAR(500), active BOOLEAN DEFAULT TRUE, category_id INT, ";
+    $query_projects .=" last_worked DATE, last_worked_id INT NOT NULL, total_hours FLOAT NOT NULL DEFAULT 0, total_billable_hours FLOAT NOT NULL DEFAULT 0, ";
     //We make foreign keys actually reference something so we don't get a project with a category id that doesn't exist
     $query_projects .= " PRIMARY KEY (project_id), FOREIGN KEY (category_id) REFERENCES categories(category_id), FOREIGN KEY (last_worked_id) REFERENCES people(person_id))";
     $databaseConnection->query($query_projects);
 
-    $query_hours = "CREATE TABLE IF NOT EXISTS hours (hours_id INT NOT NULL AUTO_INCREMENT, date DATE, hours FLOAT, project_id INT, person_id INT, comments VARCHAR(500), task VARCHAR(50), billable BOOLEAN, billable_hours FLOAT, ";
+    $query_hours = "CREATE TABLE IF NOT EXISTS hours (hours_id INT NOT NULL AUTO_INCREMENT, date DATE, hours FLOAT, project_id INT, person_id INT, comments VARCHAR(500), task VARCHAR(100), billable BOOLEAN, billable_hours FLOAT, ";
     $query_hours .= "PRIMARY KEY (hours_id), FOREIGN KEY (project_id) REFERENCES projects(project_id), FOREIGN KEY (person_id) REFERENCES people(person_id))";
     $databaseConnection->query($query_hours);
 }
@@ -132,7 +133,16 @@ function db_get_last_id( $table, $idfield )
 	return $row[$idfield];
 }
 
-
+function db_get_first_id( $table, $idfield )
+{
+    global $databaseConnection;
+	
+	$sql = "SELECT * FROM {$table} ORDER BY {$idfield}";
+	$res = $databaseConnection->query($sql);
+	$row = $res->fetch_assoc();
+	$res->free();
+	return $row[$idfield];
+}
 
 function db_get_person( $id )
 {
@@ -328,9 +338,8 @@ function db_get_category_id( $name )
 {
     global $databaseConnection;
 	
-	$sql = "SELECT * FROM categories WHERE category_name={$name}";
+	$sql = "SELECT * FROM categories WHERE category_name='{$name}'";
 	$res = $databaseConnection->query($sql);
-	
 	if( $err = mysqli_error() )
 	{
 		$row = array();
@@ -343,7 +352,7 @@ function db_get_category_id( $name )
 		$row = $res->fetch_assoc();
 		$res->free();
 	}
-
+    print_r($row);
 	return $row;
 }
 
@@ -362,12 +371,18 @@ function prepare_project( $project )
 			break;
 			
 		case 'last_worked':
+        case 'last_worked_id':
 		case 'total_hours':
+        case 'total_billable_hours':
 		case 'project_id':
 		case 'category_id':
+        case 'active':
 			$clean[$key] = $val;
 		}	
 	}
+    echo "clean: ";
+    print_r($clean);
+    echo"<br>";
 	
 	return $clean;
 }
@@ -388,6 +403,7 @@ function prepare_category( $cat )
 			break;
 			
 		case 'category_id':
+        case 'active':
 			$clean[$key] = $val;
 		}
 	}
@@ -400,22 +416,28 @@ function prepare_category( $cat )
 function prepare_person( $person )
 {
 	$clean = array();
-	
+
 	foreach( $person as $key => $val )
 	{
 		switch( $key )
 		{
 		case 'person_firstname':
 		case 'person_lastname':
+        case 'username':
 			$clean[$key] = "'" . $val . "'";
 			break;
+        
+        case 'password':
+			$clean[$key] = "SHA('" . $val . "')";
+            break;
 			
 		case 'person_id':
 		case 'current_project_id':
+        case 'active':
 			$clean[$key] = $val;
 		}
 	}
-	
+
 	return $clean;
 }
 
@@ -428,6 +450,7 @@ function prepare_hours( $hours )
 	{   
 		switch( $key )
 		{
+        case 'hours_id':
 		case 'project_id':
 		case 'person_id':
 		case 'hours':
@@ -439,9 +462,23 @@ function prepare_hours( $hours )
 			$clean[$key] = "'" . date( "Y-m-d", strtotime( $val ) ) . " 1:00:00'";
 			break;
 		
-		case 'comments':
-        case 'task':
         case 'billable':
+            if ($val)
+            {
+                if (array_key_exists('hours', $hours))
+                {
+                    $clean['billable_hours'] = $hours['hours'];
+                }
+                else
+                {
+                    $clean['billable_hours'] = 0;
+                }
+            }
+            $clean[$key] = "'" . $val . "'";
+            break;
+
+        case 'comments':
+        case 'task':
 			$clean[$key] = "'" . $val . "'";
 		}
 	}
@@ -461,7 +498,7 @@ function create_save_sql( $table, $vals, $idfield )
 	{
 		$sql = create_insert_sql( $table, $vals, $idfield );
 	}
-	
+
 	return $sql;
 }
 
@@ -574,12 +611,11 @@ function db_get_hours( $hours_id )
     global $databaseConnection;
 	
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id INNER JOIN people ON hours.person_id = people.person_id WHERE hours_id={$hours_id}";
-	$res = $databaseConnection->query($sql);
 	
-	if( $err = mysqli_error() )
+	if( !($res = $databaseConnection->query($sql)) )
 	{
 		$row = array();
-		show_mysql_error( "$err: $sql" );
+		show_mysql_error( $databaseConnection->error() );
 	}
 	else
 	{
@@ -633,12 +669,10 @@ function db_update_project( $id )
 	$total_hours = 0;
 	
 	$sql = "SELECT * FROM hours WHERE project_id={$id} ORDER BY date DESC";
-	
-	$res = $databaseConnection->query($sql );
 
-	if( $err = mysqli_error() )
+	if( !($res = $databaseConnection->query($sql )) )
 	{
-		show_mysql_error( "$err: $sql" );
+		show_mysql_error($databaseConnection->error() );
 	}
 	
 	if( $row = $res->fetch_assoc() )
@@ -655,8 +689,9 @@ function db_update_project( $id )
 	while( $row = $res->fetch_assoc() )
 	{
 		$total_hours += $row['hours'];
+        $billable_hours += $row['billable_hours'];
 	}
-	$sql .= "total_hours={$total_hours} WHERE project_id={$id}";
+	$sql .= "total_hours={$total_hours}, total_billable_hours={$billable_hours} WHERE project_id={$id}";
 	$databaseConnection->query($sql);
 	if( $err = mysqli_error() )
 	{

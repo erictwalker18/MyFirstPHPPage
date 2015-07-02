@@ -1,0 +1,78 @@
+body
+{
+	background-color: rgb(255, 255, 255);
+	color: rgb(0, 0, 0);
+	font-size: 10pt;
+	font-weight: normal;
+	font-style: normal;
+	font-family: Arial;
+	vertical-align: top;
+}
+td
+{
+	font-size: 10pt;
+	padding: 2px;
+}
+.ReportColumn
+{
+	border-right: 1px solid grey;
+}
+.ReportRow
+{
+	border-bottom: 1px solid grey;
+}
+.ReportHeader
+{
+	font-size: 20pt;
+}
+.ReportDate
+{
+	font-size: 15pt;
+}
+.SubReportHeader
+{
+	margin-top: 30px;
+	font-size: 12pt;
+	padding: 5px;
+	border-top: 1px solid black;
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+	width: 292px;
+}
+.ReportTable
+{
+	border: 1px solid black;
+	width: 302px;
+}
+.ReportRow
+{
+	border-bottom: 1px solid rgb(150, 150, 150);
+}
+.ReportBottomRow
+{
+}
+.ReportFirstColumn
+{
+	width: 190px;
+	padding: 5px;
+}
+.ReportColumnLarge
+{
+	float: right;
+	width: 190px;
+	border-left: 1px solid rgb(150, 150, 150);
+	padding: 5px;
+}
+.ReportColumnSmall
+{
+	float: right;
+	width: 90px;
+	border-left: 1px solid rgb(150, 150, 150);
+	padding: 5px;
+}
+.ReportHeaderRow
+{
+	font-size: 10pt;
+	font-weight: bold;
+	border-bottom: 1px solid black;
+}

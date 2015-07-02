@@ -1,4 +1,4 @@
-<?php require_once ("Includes/session.php"); ?>
+<?php require_once ("Includes/common.php"); ?>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -30,12 +30,11 @@
                         else
                         {
                             echo '<li><a href="/logon.php">Login</a></li>' . "\n";
-                            echo '<li><a href="/register.php">Register</a></li>' . "\n";
                         }
                         ?>
                         </ul>
                         <?php if (logged_on()) {
-                            echo "<div class=\"welcomeMessage\">Welcome, <strong>{$_SESSION['username']}</strong></div>\n";
+                            echo "<div class=\"welcomeMessage\">Welcome, <strong>{$GLOBALS['user']['username']}</strong></div>\n";
                         } ?>
                     </section>
                 </div>
@@ -48,10 +47,15 @@
                         <ul id="menu">
                             <li><a href="/index.php">Home</a></li>
                             <li><a href="/uploadpage.php">Upload</a></li>
+                            <li><a href="/time.php">Log Hours</a></li>
+                            <li><a href="/people.php">People</a></li>
                             <li><a href="/projects.php">Projects</a></li>
+                            <li><a href="/categories.php">Categories</a></li>
+                            <li><a href="/report.php">Reports</a></li>
                         </ul>
                     </nav>
             </section>
         </header>
         <div id="main"> <!-- This div also gets closed in the footer! -->
+            <h2><?php echo $GLOBALS['page_title'] ?></h2>
 

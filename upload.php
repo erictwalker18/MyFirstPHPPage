@@ -2,6 +2,7 @@
 require_once("Functions/parser.php");
 require_once("Functions/database.php");
 include("Includes/header.php"); 
+
 $target_dir = "Uploads/";
 $target_file = $target_dir . basename($_FILES["fileToUpload"]["name"]);
 $uploadOk = 1;

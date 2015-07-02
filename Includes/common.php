@@ -1,29 +1,53 @@
 <?php
 
+session_start();
 include_once( "/Functions/database.php" );
-include_once( "connectDB.php" );
-
+require_once( "connectDB.php" );
 
 $GLOBALS['cookie_name'] = "timecard_v2";
 $GLOBALS['user'] = array();
-$GLOBALS['user']['loggedin'] = false;
+$GLOBALS['user']['loggedin'] = FALSE;
 
 function check_user_session()
 {
-	
 	if( isset( $_COOKIE[$GLOBALS['cookie_name']] ) )
 	{
 		$id = $_COOKIE[$GLOBALS['cookie_name']];
 		$GLOBALS['user'] = db_get_person( $id );
-		$GLOBALS['user']['loggedin'] = true;
+		$GLOBALS['user']['loggedin'] = TRUE;
 	}
 }
 
+function logged_on()
+{
+    check_user_session();
+
+    if( $GLOBALS['user']['loggedin'] )
+    {
+	    return TRUE;
+    }
+    else
+    {
+        return FALSE;
+    }
+}
 
 
 function set_user_session( $user )
 {
-	setcookie( $GLOBALS['cookie_name'], $user );
+	setcookie( $GLOBALS['cookie_name'], $user, time()+(86400*30) ); //Cookies expire after 30 days
+}
+
+function logoff()
+{
+    //work on this today!
+	if( logged_on() ) {
+        unset($_COOKIE[$GLOBALS['cookie_name']]);
+		setcookie( $GLOBALS['cookie_name'],'', time()-3600 );
+        $GLOBALS['user'] = array();
+		$GLOBALS['user']['loggedin'] = FALSE;
+	}
+    header ("Location: index.php");
 }
 
 
@@ -147,7 +171,7 @@ function make_people_list( $include_all_option = true, $rows = 10 )
 	
 	global $databaseConnection;
 	$sql = "SELECT * FROM people ORDER BY person_lastname, person_firstname ASC";
-	$res = mysql_query( $sql, $conn );
+	$res = $databaseConnection->query($sql);
 	
 	if( $include_all_option )
 	{
