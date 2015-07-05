@@ -19,13 +19,13 @@ if( !($res = $databaseConnection->query($sql)) )
 
 $file = fopen( "hours.csv", "w" );
 
-$header = "person,date,project,category,hours,details\n";
+$header = "person,date,project,category,hours,billable hours,task,details\n";
 fwrite( $file, $header );
 
 $row = $res->fetch_assoc();
 while( $row != null )
 {
-	$srow = "\"{$row['person_lastname']}, {$row['person_firstname']}\",\"{$row['date']}\",\"{$row['project_name']}\",\"{$row['category_name']}\",\"{$row['hours']}\",\"{$row['details']}\"\n";
+	$srow = "\"{$row['person_lastname']}, {$row['person_firstname']}\",\"{$row['date']}\",\"{$row['project_name']}\",\"{$row['category_name']}\",\"{$row['hours']}\",\"{$row['billable_hours']}\",\"{$row['task']}\",\"{$row['comments']}\"\n";
 	fwrite( $file, $srow );
 
 	$row = $res->fetch_assoc();

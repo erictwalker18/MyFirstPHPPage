@@ -58,7 +58,15 @@ print_header( 'Manage Projects' );
 
 if( $list )
 {
-	$projects = db_get_projects();
+	if ( isset($_REQUEST['active_only']) )
+    {
+	    $projects = db_get_project_group( 'active', 1 );
+    }
+    else
+    {
+        $projects = db_get_project_group( 'active', 1 );
+        $projects = array_merge($projects, db_get_project_group( 'active', 0 ));
+    }
 	?>
 	<div class="DataRow">
 	<div class="DataHeader" style="width: 200px">Project Name</div>
@@ -79,8 +87,20 @@ if( $list )
 		</div>
 		<?php
 	}
-	
+	if ( !isset($_REQUEST['active_only']) )
+    {
 	?>
+    <a href="projects.php?active_only">Active Projects Only</a>
+    <?php
+    }
+    else
+    {
+    ?>
+    <a href="projects.php">All Projects</a>
+    <?php
+    }
+    ?>
+	<br><br>
 	<a href="projects.php?new">Add New Project</a>
 	<?php
 }

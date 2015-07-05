@@ -6,7 +6,7 @@ check_user_session();
 
 if( !$GLOBALS['user']['loggedin'] )
 {
-	redirect_by_url( 'index.php' );
+	redirect_by_url( 'logon.php' );
 	exit();
 }
 

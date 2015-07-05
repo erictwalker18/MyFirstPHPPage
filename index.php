@@ -1,24 +1,19 @@
 <?php 
     require_once ("Includes/simpledb-config.php"); 
     require_once  ("Includes/connectDB.php");
-    include("Includes/header.php");
-?>
+    include("Includes/common.php");
 
-    <h3>Welcome to the timecard system.</h3>
+    print_header("Welcome to the Placeways timecard system.");
+?>
 
     <ol class="round">
         <li class="one">
-            <h5>Login as admin </h5>
-           The site admin username and password are stored in the config file in the Includes directory. 
+            <h5>Login</h5>
+           Your username and password should be provided by a system administrator. 
         </li>
         <li class="two">
-            <h5>Customize your site</h5>
-             After you login, you can add, delete, and modify web pages.
-         </li>
-        <li class="asterisk">
-            <div class="visit">
-                To learn more about PHP, visit <a href="http://php.net" title="PHP.net Website">http://php.net</a>. 
-            </div>
+            <h5>Enter hours</h5>
+             After you login, you can enter hours through a form or upload a CSV from a template.
          </li>
     </ol>
 

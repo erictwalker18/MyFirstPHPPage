@@ -53,7 +53,7 @@ $title = "{$name}: {$sstart} to {$send}";
 
 <h2><?php echo $title ?></h2>
 
-<table style="{border: 1px solid black;}" cellspacing="0" cellpadding="0">
+<table style="border: 1px solid black;" cellspacing="0" cellpadding="0">
 	<tr>
 		<td class="ReportColumn ReportRow">&nbsp;</td>
 		<?php

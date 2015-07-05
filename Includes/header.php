@@ -15,7 +15,7 @@
             <div class="content-wrapper">
                 <div class="float-left">
                     <p class="site-title">
-                        <a href="http://www.placeways.com"> <img src="../Images/Placeways Standard Logo 754x527.png" alt="Logo" style="width:110px;height:77px;"> </a> 
+                        <a href="http://www.placeways.com"> <img src="../Images/Placeways Standard Logo 754x527.png" alt="Logo" style="width:110px;height:77px;vertical-align: middle;"> </a> 
                         <a href="/index.php">Timecards</a>
                     </p>
                 </div>
@@ -57,5 +57,5 @@
             </section>
         </header>
         <div id="main"> <!-- This div also gets closed in the footer! -->
-            <h2><?php echo $GLOBALS['page_title'] ?></h2>
+            <h2 id="page_title"><?php echo $GLOBALS['page_title'] ?></h2>
 

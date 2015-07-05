@@ -1,11 +1,12 @@
 <?php
 require_once ("database.php");
+$hours = NULL;
+
 function parse_csv($filename)
 {
-    $hours = fopen("$filename", "r") or die("Unable to open file!");
-    $firstline = fgets($hours);
-    $headers = explode(',', $firstline);
-    $acceptedHeaders = array("date","project_id","hours","task","billable","billable_hours","comments","category", "person_id");
+    $GLOBALS['hours'] = fopen("$filename", "r") or die("Unable to open file!");
+    $headers = fgetcsv($GLOBALS['hours']);
+    $acceptedHeaders = array("date","project_id","hours","task","billable","comments","category", "person_id");
     //Error handling. We clean up the headers, removing new lines and such, and check if the headings are valid.
     for ($x=0; $x < sizeof($headers); $x++) {
         $headers[$x] = strtolower($headers[$x]);
@@ -27,24 +28,25 @@ function parse_csv($filename)
             $headers[$x] = "comments";
         }
         if (!in_array($headers[$x], $acceptedHeaders))
-            die("Incorrect file type. You must use the default csv file provided by your system administrator.");
+            parse_error("Incorrect file type. You must use the default csv file provided by your system administrator.");
     }
     //Goes through the lines of the file, forms an hours entry based on the content of the line.
-    while (!feof($hours)){
-        $currentLine = fgets($hours);
-        //Check for deleted rows, common when messing with csv's in excel
+    while (!feof($GLOBALS['hours'])){
+        $currentData = fgetcsv($GLOBALS['hours']);
         $isNull = TRUE;
-        for ($i = 0; $i < $currentLine; $i++)
+        //Checking for null values that are common at the end of the template file
+        foreach ($currentData as $key => $val)
         {
-            if (substr($currentLine, $i, 1) != ",")
+            if( !($val == '') )
             {
                 $isNull = FALSE;
                 break;
             }
         }
-        if ($currentLine == "" || $isNull)
+        if ( $currentData == NULL || $isNull )
+        {
             break;
-        $currentData = explode(",", $currentLine);
+        }
         $clean = array();
         for ($x=0; $x < sizeof($headers); $x++) {
             if ($headers[$x] != "category")
@@ -56,49 +58,67 @@ function parse_csv($filename)
 	    $hid = db_get_last_id( 'hours', 'hours_id' );
 	    $last_hours = db_get_hours( $hid );
 	    db_update_project( $last_hours['project_id'] );
-    }
-    fclose($hours);
+        $project = db_get_project($clean['project_id']);
+        echo "Added ".$clean['hours']." hours on ".$clean['date']." for the project ".$project['project_name'].".<br>";
+    } 
+    fclose($GLOBALS['hours']);
 }
+
 function parseItem($dataType, $data) 
 {
     $clean = "";
+    $data = str_replace("'", "''", $data);
     switch ($dataType) {
         case "date":
-        //$clean[$key] = "'" . date( "Y-m-d", strtotime( $val ) ) . " 1:00:00'";?
-        $fullData = explode('/',$data);
-        $date = date_create();
-        date_date_set($date, $fullData[2], $fullData[0], $fullData[1]);
-        $clean .= date_format($date, "Y-m-d");
-        break;
+            //$clean[$key] = "'" . date( "Y-m-d", strtotime( $val ) ) . " 1:00:00'";?
+            $fullData = explode('/',$data);
+            $date = date_create();
+            date_date_set($date, $fullData[2], $fullData[0], $fullData[1]);
+            $clean .= date_format($date, "Y-m-d");
+            break;
         case "project_id":
-        $tmp = db_get_project_id($data);
-        $clean .= $tmp['project_id'];
-        break;
+            $tmp = db_get_project_id($data);
+            if ( $tmp['project_id'] == -1 )
+            {
+                parse_error("This project hasn't been added to the database: " . $data);
+            }
+            else
+            {
+                $clean .= $tmp['project_id'];
+            }
+            break;
         case "person_id":
-        list($firstname, $lastname) = explode(' ', $data);
-        $clean = db_get_person_id($firstname, $lastname);
-        break;
+            list($lastname, $firstname) = explode(', ', $data);
+            $clean = db_get_person_id($firstname, $lastname);
+            if ( $clean == NULL )
+            {
+                parse_error("This person has not been added to the database: " . $firstname . " " . $lastname);
+            }
+            break;
         case "hours":
-        case "billable_hours":
         case "task":
         case "comments":
-        $clean .= $data;
-        break;
+            $clean .= $data;
+            break;
         case "billable":
-        if ($data == "Yes")
-            $clean .= 1;
-        elseif ($data == "No")
-            $clean .= 0;
-        else
-            echo("Incorrect input for billable. Requires 'Yes' or 'No' (without the quotes.)");
-        break;
+            if ($data == "Yes")
+                $clean .= 1;
+            else
+                $clean .= 0;
+            break;
         case "category":
-        //do nothing, we already hhave this information in the database, supposedly
-        break;
+            //do nothing, we already have this information in the database, supposedly
+            break;
         default:
-            echo("This type of heading is not allowed: " . $dataType);
-        break;
+            parse_error("This type of heading is not allowed: " . $dataType);
+            break;
     }
     return $clean;
+}
+
+function parse_error($err_msg)
+{
+    fclose($GLOBALS['hours']);
+    die($err_msg);
 }
 ?>

@@ -90,7 +90,7 @@ h5, h6 {
 ----------------------------------------------------------*/
 .outer-wrapper{
     min-height: 100%;
-    background-color: #efeeef;
+    background-color: #efeffe;
 }
 .content-wrapper {
     margin: 0;
@@ -118,6 +118,14 @@ h5, h6 {
     .featured + .main-content {
         background: url("../Images/heroAccent.png") no-repeat;
     }
+
+#page_title {
+    padding: inherit inherit 5px;
+}
+
+#upload_section {
+    padding: 10px;
+}
 
 .visit{
     font-size: 18pt;
@@ -155,7 +163,7 @@ footer .footer-wrapper {
     color: #c8c8c8;
     font-family: Rockwell, Consolas, "Courier New", Courier, monospace;
     font-size: 2.3em;
-    margin: 10px 0 -10px;
+    margin: 10px 0 0;
 }
 
 .site-title a, .site-title a:hover, .site-title a:active {
@@ -163,6 +171,7 @@ footer .footer-wrapper {
     color: #c8c8c8;
     outline: none;
     text-decoration: none;
+    height: 77px;
 }
 
 
@@ -366,6 +375,32 @@ aside {
     margin-left: 40px;
     float: left;
     width: 50%;
+}
+
+/* reports page */
+.TableDataCaption
+{
+	border-right: 1px solid #aaaaaa;
+	padding-right: 5px;
+	text-align: right;
+}
+.TableDataValue
+{
+	padding-left: 5px;
+}
+.ReportTypeBox
+{
+	border: 1px solid grey;
+}
+.ReportTypeBoxHeader
+{
+	font-weight: bold;
+	padding: 5px;
+	border-bottom: 1px solid grey;
+}
+.ReportTypeDetails
+{
+	padding: 5px;
 }
 
 /* contact */

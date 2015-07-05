@@ -50,7 +50,15 @@ print_header( 'Manage Categories' );
 
 if( $list )
 {
-	$cats = db_get_categories();
+	if ( isset($_REQUEST['active_only']) )
+    {
+	    $cats = db_get_category_group( 'active', 1 );
+    }
+    else
+    {
+        $cats = db_get_category_group( 'active', 1 );
+        $cats = array_merge($cats, db_get_category_group( 'active', 0 ));
+    }
 	
 	?>
 	<div class="DataRow">
@@ -66,9 +74,21 @@ if( $list )
 		</div>
 		<?php
 	}
-	
+	if ( !isset($_REQUEST['active_only']) )
+    {
 	?>
-	<a href="categories.php?new">Add New Category</a>
+    <a href="categories.php?active_only">Active Categories Only</a>
+    <?php
+    }
+    else
+    {
+    ?>
+    <a href="categories.php">All Categories</a>
+    <?php
+    }
+    ?>
+	<br><br>
+    <a href="categories.php?new">Add New Category</a>
 	<?php
 }
 else if( isset( $_REQUEST['delete'] ) )
@@ -88,7 +108,7 @@ else
 	<input type="hidden" name="category_id" value="<?php echo $cat['category_id'] ?>" />
 	<table border="0">
 		<tr>
-			<td>Categpry Name</td>
+			<td>Category Name</td>
 			<td><input size="45" name="category_name" value="<?php echo $cat['category_name'] ?>" maxlength="45" /></td>
 		</tr>
 		<tr>

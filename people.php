@@ -10,6 +10,16 @@ $person['person_lastname'] = '';
 $person['person_id'] = -1;
 $person['current_project_id'] = 0;
 $person['active'] = 0;
+$person['admin'] = 0;
+
+if (logged_on())
+{
+    $currentUser = get_user();
+}
+else
+{
+    $currentUser = $person;
+}
 
 date_default_timezone_set('America/Denver');
 
@@ -40,6 +50,10 @@ else if( isset( $_REQUEST['person_firstname'] ) )
 else if( isset( $_REQUEST['person_id'] ) )
 {
 	$person = db_get_person( $_REQUEST['person_id'] );
+    if ( !(is_admin() || $person['person_id'] == $user['person_id']) )
+    {
+        redirect_by_url( "people.php");
+    }
 }
 else if( isset( $_REQUEST['new'] ) )
 {
@@ -53,7 +67,15 @@ print_header( 'Manage People' );
 
 if( $list )
 {
-	$people = db_get_people( '', '' );
+    if ( isset($_REQUEST['active_only']) )
+    {
+	    $people = db_get_people_group( 'active', 1 );
+    }
+    else
+    {
+        $people = db_get_people_group( 'active', 1 );
+        $people = array_merge($people, db_get_people_group( 'active', 0 ));
+    }
 
 ?>
 	<div class="DataRow">
@@ -82,11 +104,26 @@ if( $list )
 		</div>
 		<?php
 	}
+    if ( !isset($_REQUEST['active_only']) )
+    {
 	?>
-	<!-- this right </table> --> 
+    <a href="people.php?active_only">Active People Only</a>
+    <?php
+    }
+    else
+    {
+    ?>
+    <a href="people.php">All People</a>
+    <?php
+    }
+    if ( is_admin() )
+    {
+    ?>
 	<br>
+    <br>
 	<a href="people.php?new">Add New Person</a>
 	<?php
+    }
 }
 else if( isset( $_REQUEST['delete'] ) )
 {
@@ -106,21 +143,35 @@ else
 	<tr><td>Last Name</td><td><input name="person_lastname" value="<?php echo $person['person_lastname'] ?>" /></td></tr>
 	<tr><td>First Name</td><td><input name="person_firstname" value="<?php echo $person['person_firstname'] ?>" /></td></tr>
     <?php
-        if( $person['person_id'] == -1 )
+        if( is_admin() || $currentUser['person_id'] == $person['person_id'])
 	    {
 	?>
-        <tr><td>Username</td><td><input name="username" value="" /></td></tr>
+        <tr><td>Username</td><td><input name="username" value="<?php echo $person['username'] ?>" /></td></tr>
         <tr><td>Password</td><td><input type="password" name="password" value="" /></td></tr>
     <?php
         }
 	?>
-    <tr>
-		<td style="vertical-align: top">Active?</td>
-		<td>
-            <input name="active" type="radio" value="1" <?php if($person['active'] == 1){ echo 'checked';} ?>>Yes</input>
-            <input name="active" type="radio" value="0" <?php if(!($person['active'] == 1)){ echo 'checked';} ?>>No</input>
-        </td>
-	</tr>
+    <?php
+        if( is_admin() )
+	    {
+	?>
+        <tr>
+	        <td style="vertical-align: top">Admin?</td>
+	        <td>
+                <input name="admin" type="radio" value="1" <?php if($person['admin'] == 1){ echo 'checked';} ?>>Yes</input>
+                <input name="admin" type="radio" value="0" <?php if(!($person['admin'] == 1)){ echo 'checked';} ?>>No</input>
+            </td>
+	    </tr>
+        <tr>
+		    <td style="vertical-align: top">Active?</td>
+		    <td>
+                <input name="active" type="radio" value="1" <?php if($person['active'] == 1){ echo 'checked';} ?>>Yes</input>
+                <input name="active" type="radio" value="0" <?php if(!($person['active'] == 1)){ echo 'checked';} ?>>No</input>
+            </td>
+	    </tr>
+    <?php
+        }
+	?>
 	<tr><td>Current Default Project</td><td><?php echo make_project_combo( $person['current_project_id'], 'current_project_id' ) ?></td></tr>
 	</table>
 	<br><br>
@@ -128,7 +179,7 @@ else
 
 	<?php
 
-	if( $person['person_id'] == -1 )
+	if( $person['person_id'] == -1 && is_admin() )
 	{
 	?>
 		<input name="add" type="submit" value="Add New Person" />

@@ -32,6 +32,23 @@ function logged_on()
     }
 }
 
+function is_admin()
+{
+    if (logged_on())
+    {
+        if ( $GLOBALS['user']['admin'] == 1 )
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+function get_user()
+{
+    return db_get_person($_COOKIE[$GLOBALS['cookie_name']]);
+}
+
 
 function set_user_session( $user )
 {
@@ -165,7 +182,7 @@ function make_project_list( $include_all_option = true, $rows = 10, $list_name =
 
 
 
-function make_people_list( $include_all_option = true, $rows = 10 )
+function make_people_list( $include_all_option = TRUE, $rows = 10, $include_active_option = TRUE )
 {
 	$html = "<select multiple size=\"{$rows}\" name=\"person_id\">\n";
 	
@@ -178,6 +195,11 @@ function make_people_list( $include_all_option = true, $rows = 10 )
 		$html .= "<option selected value=\"all\">All People</option>\n";
 	}
 	
+    if( $include_active_option )
+	{
+		$html .= "<option value=\"active\">Active People</option>\n";
+	}
+
 	while( $row = $res->fetch_assoc() )
 	{
 		$html .= "<option value=\"{$row['person_id']}\">{$row['person_lastname']}, {$row['person_firstname']}</option>\n";

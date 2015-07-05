@@ -29,7 +29,7 @@ function create_tables($databaseConnection)
     $query_projects .= " PRIMARY KEY (project_id), FOREIGN KEY (category_id) REFERENCES categories(category_id), FOREIGN KEY (last_worked_id) REFERENCES people(person_id))";
     $databaseConnection->query($query_projects);
 
-    $query_hours = "CREATE TABLE IF NOT EXISTS hours (hours_id INT NOT NULL AUTO_INCREMENT, date DATE, hours FLOAT, project_id INT, person_id INT, comments VARCHAR(500), task VARCHAR(100), billable BOOLEAN, billable_hours FLOAT, ";
+    $query_hours = "CREATE TABLE IF NOT EXISTS hours (hours_id INT NOT NULL AUTO_INCREMENT, date DATE, hours FLOAT, project_id INT, person_id INT, comments VARCHAR(500), task VARCHAR(100) DEFAULT '0', billable BOOLEAN, billable_hours FLOAT DEFAULT 0, ";
     $query_hours .= "PRIMARY KEY (hours_id), FOREIGN KEY (project_id) REFERENCES projects(project_id), FOREIGN KEY (person_id) REFERENCES people(person_id))";
     $databaseConnection->query($query_hours);
 }
@@ -73,10 +73,9 @@ function db_save_hours( $hours )
 	
 	$hours = prepare_hours( $hours );
 	$sql = create_save_sql( 'hours', $hours, 'hours_id' );
-	$databaseConnection->query($sql);
-	if( $err = mysqli_error() )
+	if( !$databaseConnection->query($sql) )
 	{
-		show_mysql_error( "$err: $sql" );
+		show_mysql_error( $databaseConnection->error() );
 	}
 }
 
@@ -252,6 +251,21 @@ function db_get_people( $firstname = '', $lastname = '' )
 	return $people;
 }
 
+function db_get_people_group( $group, $val )
+{
+    global $databaseConnection;
+
+	$people = array();
+	
+    $sql = "SELECT * FROM people WHERE {$group} = {$val} ORDER BY person_lastname";
+	
+    $res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
+	{
+		$people[$row['person_id']] = $row;
+	}
+	return $people;
+}
 
 
 function db_get_projects()
@@ -288,7 +302,21 @@ function db_get_projects_in_category( $category_id )
 	return $projects;
 }
 
+function db_get_project_group( $group, $val )
+{
+    global $databaseConnection;
 
+	$projects = array();
+	
+    $sql = "SELECT * FROM projects WHERE {$group} = {$val} ORDER BY project_name";
+	
+    $res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
+	{
+		$projects[$row['project_id']] = $row;
+	}
+	return $projects;
+}
 
 function db_get_categories()
 {
@@ -303,6 +331,22 @@ function db_get_categories()
 		$cats[$row['category_id']] = $row;
 	}
 	
+	return $cats;
+}
+
+function db_get_category_group( $group, $val )
+{
+    global $databaseConnection;
+
+	$cats = array();
+	
+    $sql = "SELECT * FROM categories WHERE {$group} = {$val} ORDER BY category_name";
+	
+    $res = $databaseConnection->query($sql);
+	while( $row = $res->fetch_assoc() )
+	{
+		$cats[$row['category_id']] = $row;
+	}
 	return $cats;
 }
 
@@ -380,9 +424,6 @@ function prepare_project( $project )
 			$clean[$key] = $val;
 		}	
 	}
-    echo "clean: ";
-    print_r($clean);
-    echo"<br>";
 	
 	return $clean;
 }
@@ -434,6 +475,7 @@ function prepare_person( $person )
 		case 'person_id':
 		case 'current_project_id':
         case 'active':
+        case 'admin':
 			$clean[$key] = $val;
 		}
 	}

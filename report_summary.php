@@ -26,6 +26,10 @@ if( $_REQUEST['person_id'] == 'all' )
 {
 	$people = db_get_people();
 }
+elseif( $_REQUEST['person_id'] == 'active' )
+{
+	$people = db_get_people_group( 'active', 1 );
+}
 else
 {
 	// _$REQUEST will only have the last person_id variable in it, so we
@@ -57,6 +61,7 @@ foreach( $people as $id => $person )
 	
 	<div class="ReportHeaderRow">
 	<div class="ReportColumnSmall">Hours</div>
+    <div class="ReportColumnSmall">Billable Hours</div>
 	<div class="ReportFirstColumn">Project Category</div>
 	</div>
 
@@ -64,7 +69,7 @@ foreach( $people as $id => $person )
 	$total = 0;
 	foreach( $cats as $category_id => $cat )
 	{
-		$sql = "SELECT SUM(hours.hours) AS total FROM hours INNER JOIN projects ON hours.project_id = projects.project_id INNER JOIN categories on projects.category_id = categories.category_id WHERE person_id={$id} AND categories.category_id = {$category_id} AND hours.date >= '{$sstart}' AND hours.date <= '{$send}'";
+		$sql = "SELECT SUM(hours.hours) AS total, SUM(hours.billable_hours) AS total_billable FROM hours INNER JOIN projects ON hours.project_id = projects.project_id INNER JOIN categories on projects.category_id = categories.category_id WHERE person_id={$id} AND categories.category_id = {$category_id} AND hours.date >= '{$sstart}' AND hours.date <= '{$send}'";
 		
 		if( !($res = $databaseConnection->query($sql)) )
 		{
@@ -80,6 +85,17 @@ foreach( $people as $id => $person )
 			{
 				echo $row['total'];
 				$total += $row['total'];
+			}
+			else
+			{
+				echo '0';
+			}
+			?></div>
+            <div class="ReportColumnSmall"><?php
+			if( isset( $row['total_billable'] ) )
+			{
+				echo $row['total_billable'];
+				$total += $row['total_billable'];
 			}
 			else
 			{
