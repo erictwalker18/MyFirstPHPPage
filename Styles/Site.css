@@ -250,6 +250,7 @@ ul#menu {
 .navigation {
     border-top: 5px solid #a6dbed;
     /*background-color: #fff;*/
+    height: 33px;
     
     margin: 0;
     padding:  0;

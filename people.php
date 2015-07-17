@@ -1,6 +1,7 @@
 <?php
 
 include_once( 'Includes/common.php' );
+include_once( 'templateTester.php' );
 
 $list = false;
 
@@ -29,6 +30,10 @@ if( isset( $_REQUEST['add'] ) )
 	unset( $person['person_id'] );
 	unset( $person['add'] );
 	db_save_person( $person );
+
+    //Update the template file
+    save_new_person( $person['person_lastname'] . ', ' . $person['person_firstname'] );
+
 	redirect_by_url( "people.php" );
 }
 else if( isset( $_REQUEST['delete'] ) )
@@ -37,12 +42,23 @@ else if( isset( $_REQUEST['delete'] ) )
 }
 else if( isset( $_REQUEST['confirmdelete'] ) )
 {
+    //Update the template file
+    $personToDelete = db_get_person($_REQUEST['person_id']);
+    $person = $personToDelete['person_lastname']. ', '. $personToDelete['person_firstname'];
+    delete_person($person);
+
 	db_delete_person( $_REQUEST['person_id'] );
 	$list = true;
 }
 else if( isset( $_REQUEST['person_firstname'] ) )
 {
 	$person = $_REQUEST;
+
+    //Update the template file
+    $oldperson = db_get_person($_REQUEST['person_id']);
+    $oldname = $oldperson['person_lastname'] . ', ' . $oldperson['person_firstname'];
+    update_existing_person($oldname, $person['person_lastname']. ', ' .$person['person_firstname']);
+
 	db_save_person( $_REQUEST );
 
     redirect_by_url( "people.php" );
@@ -74,16 +90,26 @@ if( $list )
     else
     {
         $people = db_get_people_group( 'active', 1 );
-        $people = array_merge($people, db_get_people_group( 'active', 0 ));
+        $people =  $people + db_get_people_group( 'active', 0 );
     }
-
-?>
+    if ( !isset($_REQUEST['active_only']) )
+    {
+	?>
+    <a href="people.php?active_only">Active People Only</a>
+    <?php
+    }
+    else
+    {
+    ?>
+    <a href="people.php">All People</a>
+    <?php
+    }
+    ?>
 	<div class="DataRow">
 	<div class="DataValue" style="width: 200px;">Person</div>
 	<div class="DataValue" style="width: 200px;">Last Reported</div>
 	</div>
 <?php
-
 	foreach( $people as $id => $person )
 	{
 		$sql = "SELECT * FROM hours WHERE person_id={$id} ORDER BY hours.date DESC";
@@ -104,22 +130,9 @@ if( $list )
 		</div>
 		<?php
 	}
-    if ( !isset($_REQUEST['active_only']) )
-    {
-	?>
-    <a href="people.php?active_only">Active People Only</a>
-    <?php
-    }
-    else
-    {
-    ?>
-    <a href="people.php">All People</a>
-    <?php
-    }
     if ( is_admin() )
     {
     ?>
-	<br>
     <br>
 	<a href="people.php?new">Add New Person</a>
 	<?php

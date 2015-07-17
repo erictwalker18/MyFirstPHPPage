@@ -1,7 +1,7 @@
 <?php
 require_once("Functions/parser.php");
 require_once("Functions/database.php");
-include("Includes/common.php");
+require_once("Includes/common.php");
 
 print_header("Hours Upload Log");
 
@@ -11,8 +11,9 @@ $uploadOk = 1;
 $fileType = pathinfo($target_file,PATHINFO_EXTENSION);
 // Check if file already exists
 if (file_exists($target_file)) {
-    echo "Sorry, file already exists. ";
-    $uploadOk = 0;
+    echo "File already exists on server. Deleting...";
+    unlink($target_file);
+    echo "Old file deleted. Trying to upload new version. <br>";
 }
 // Check file size
 if ($_FILES["fileToUpload"]["size"] > 500000) {

@@ -52,6 +52,14 @@
                             <li><a href="/projects.php">Projects</a></li>
                             <li><a href="/categories.php">Categories</a></li>
                             <li><a href="/report.php">Reports</a></li>
+                            <?php
+                                if (is_admin())
+                                {
+                            ?>
+                            <li><a href="/edit.php">Edit</a></li>
+                            <?php        
+                                }
+                            ?>
                         </ul>
                     </nav>
             </section>

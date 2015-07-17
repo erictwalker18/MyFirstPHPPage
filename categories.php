@@ -1,6 +1,7 @@
 <?php
 
 include_once( 'Includes/common.php' );
+include_once( 'templateTester.php' );
 
 $list = false;
 $cat = array();
@@ -16,6 +17,10 @@ if( isset( $_REQUEST['add'] ) )
 	unset( $cat['add'] );
 	
 	db_save_category( $cat );
+
+    //Update the template file
+    save_new_category($cat['category_name'], $cat['category_desc']);
+
 	redirect_by_url( "categories.php" );
 }
 else if( isset( $_REQUEST['delete'] ) )
@@ -24,12 +29,23 @@ else if( isset( $_REQUEST['delete'] ) )
 }
 else if( isset( $_REQUEST['confirmdelete'] ) )
 {
+    //Update the template file
+    $catToDelete = db_get_category($_REQUEST['category_id']);
+    $catToDelete = $catToDelete['category_name'];
+    delete_category($catToDelete);
+
 	db_delete_category( $_REQUEST['category_id'] );
 	$list = true;
 }
 else if( isset( $_REQUEST['category_name'] ) )
 {
 	$cat = $_REQUEST;
+
+    //Update the template file
+    $oldname = db_get_category($_REQUEST['category_id']);
+    $oldname = $oldname['category_name'];
+    update_existing_category($oldname, $cat['category_name'], $cat['category_desc']);
+
 	db_save_category( $_REQUEST );
 
     redirect_by_url( "categories.php" );
@@ -59,8 +75,20 @@ if( $list )
         $cats = db_get_category_group( 'active', 1 );
         $cats = array_merge($cats, db_get_category_group( 'active', 0 ));
     }
-	
+
+	if ( !isset($_REQUEST['active_only']) )
+    {
 	?>
+        <a href="categories.php?active_only">Active Categories Only</a>
+    <?php
+    }
+    else
+    {
+    ?>
+        <a href="categories.php">All Categories</a>
+    <?php
+    }
+    ?>
 	<div class="DataRow">
 	<div class="DataHeader" style="width: 200px">Category Name</div>
 	</div>
@@ -74,22 +102,14 @@ if( $list )
 		</div>
 		<?php
 	}
-	if ( !isset($_REQUEST['active_only']) )
-    {
-	?>
-    <a href="categories.php?active_only">Active Categories Only</a>
-    <?php
-    }
-    else
+    if ( is_admin() )
     {
     ?>
-    <a href="categories.php">All Categories</a>
-    <?php
-    }
-    ?>
-	<br><br>
-    <a href="categories.php?new">Add New Category</a>
+	<br>
+    <br>
+	<a href="categories.php?new">Add New Category</a>
 	<?php
+    }
 }
 else if( isset( $_REQUEST['delete'] ) )
 {

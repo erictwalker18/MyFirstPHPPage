@@ -1,6 +1,7 @@
 <?php
 
 include_once( 'Includes/common.php' );
+include_once( 'templateTester.php' );
 
 $list = false;
 $project = array();
@@ -16,12 +17,16 @@ if( isset( $_REQUEST['add'] ) )
 	unset( $project['project_id'] );
 	unset( $project['add'] );
 	
-    //Error checking for mysql database- requires last_worked_id and total_hours
+    //Error checking for mysql database- requires last_worked_id
     if (!array_key_exists('last_worked_id', $project))
     {
         $project['last_worked_id'] = db_get_first_id('people', 'person_id');
     }
 	db_save_project( $project );
+
+    //Update the template file
+    $cat = db_get_category($project['category_id']);
+    save_new_project($project['project_name'], $cat['category_name'], $project['project_desc']);
 
 	redirect_by_url( "projects.php" );
 }
@@ -31,12 +36,25 @@ else if( isset( $_REQUEST['delete'] ) )
 }
 else if( isset( $_REQUEST['confirmdelete'] ) )
 {
+    //Update the template file
+    $projToDelete = db_get_project($_REQUEST['project_id']);
+    $projToDelete = $projToDelete['project_name'];
+    delete_project($projToDelete);
+
 	db_delete_project( $_REQUEST['project_id'] );
+
 	$list = true;
 }
 else if( isset( $_REQUEST['project_name'] ) )
 {
 	$project = $_REQUEST;
+
+    //Update the template file
+    $oldname = db_get_project($_REQUEST['project_id']);
+    $oldname = $oldname['project_name'];
+    $cat = db_get_category($project['category_id']);
+    update_existing_project($oldname, $project['project_name'], $cat['category_name'], $project['project_desc']);
+
 	db_save_project( $_REQUEST );
 
 	redirect_by_url( "projects.php" );
@@ -67,26 +85,7 @@ if( $list )
         $projects = db_get_project_group( 'active', 1 );
         $projects = array_merge($projects, db_get_project_group( 'active', 0 ));
     }
-	?>
-	<div class="DataRow">
-	<div class="DataHeader" style="width: 200px">Project Name</div>
-	<div class="DataHeader" style="width: 150px">Total Hours</div>
-	<div class="DataHeader" style="width: 400px">Last Worked On</div>
-	</div>
-	<?php
-	
-	foreach( $projects as $id => $project )
-	{
-		$person = db_get_person( $project['last_worked_id'] );
-		?>
-		<div class="DataRow">
-		<div class="DataValue" style="width: 200px"><a class="ProjectLink" href="projects.php?project_id=<?php echo $project['project_id'] ?>"><?php echo $project['project_name'] ?></a></div>
-		<div class="DataValue" style="width: 150px"><?php echo $project['total_hours'] ?></div>
-		<div class="DataValue" style="width: 400px"><?php echo $project['last_worked'] ?> by 
-			<a href="people.php?person_id=<?php echo $person['person_id'] ?>"><?php echo $person['person_firstname'] ?> <?php echo $person['person_lastname'] ?></a></div>
-		</div>
-		<?php
-	}
+    
 	if ( !isset($_REQUEST['active_only']) )
     {
 	?>
@@ -99,8 +98,35 @@ if( $list )
     <a href="projects.php">All Projects</a>
     <?php
     }
+	?>
+	<div class="DataRow">
+	<div class="DataHeader" style="width: 300px">Project Name</div>
+	<div class="DataHeader" style="width: 150px">Total Hours</div>
+	<div class="DataHeader" style="width: 400px">Last Worked On</div>
+	</div>
+	<?php
+	
+	foreach( $projects as $id => $project )
+	{
+        if (isset($project['last_worked_id']))
+        {
+		    $person = db_get_person( $project['last_worked_id'] );
+        }
+        else
+        {
+            $person = array('person_id'=>'-1', 'person_firstname'=>'File', 'person_lastname'=>'Upload');
+        }
+		?>
+		<div class="DataRow">
+		<div class="DataValue" style="width: 300px"><a class="ProjectLink" href="projects.php?project_id=<?php echo $project['project_id'] ?>"><?php echo $project['project_name'] ?></a></div>
+		<div class="DataValue" style="width: 150px"><?php echo $project['total_hours']; ?></div>
+		<div class="DataValue" style="width: 400px"><?php if (isset($project['last_worked'])) {echo $project['last_worked']. " by ";} else { echo 'Created by';} ?>
+			<a href="people.php?person_id=<?php echo $person['person_id'] ?>"><?php echo $person['person_firstname'] ?> <?php echo $person['person_lastname'] ?></a></div>
+		</div>
+		<?php
+	}
     ?>
-	<br><br>
+	<br>
 	<a href="projects.php?new">Add New Project</a>
 	<?php
 }

@@ -1,12 +1,14 @@
 <?php
 require_once ("database.php");
+require_once ("/Includes/common.php");
+
 $hours = NULL;
 
 function parse_csv($filename)
 {
     $GLOBALS['hours'] = fopen("$filename", "r") or die("Unable to open file!");
     $headers = fgetcsv($GLOBALS['hours']);
-    $acceptedHeaders = array("date","project_id","hours","task","billable","comments","category", "person_id");
+    $acceptedHeaders = array("date","project_id","hours","task","billable","comments","category","person_id");
     //Error handling. We clean up the headers, removing new lines and such, and check if the headings are valid.
     for ($x=0; $x < sizeof($headers); $x++) {
         $headers[$x] = strtolower($headers[$x]);
@@ -28,7 +30,7 @@ function parse_csv($filename)
             $headers[$x] = "comments";
         }
         if (!in_array($headers[$x], $acceptedHeaders))
-            parse_error("Incorrect file type. You must use the default csv file provided by your system administrator.");
+            parse_error("Incorrect file type. You must use the default csv file provided by your system administrator.", $filename);
     }
     //Goes through the lines of the file, forms an hours entry based on the content of the line.
     while (!feof($GLOBALS['hours'])){
@@ -49,12 +51,28 @@ function parse_csv($filename)
         }
         $clean = array();
         for ($x=0; $x < sizeof($headers); $x++) {
-            if ($headers[$x] != "category")
+            if ($headers[$x] == "person_id")
             {
-                $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x]);
+                //Check for a name given, if there is one, then use that
+                if ($currentData[$x] != '')
+                {
+                    $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
+                }
+                //Otherwise, pull the name from the session
+                else
+                {
+                    //Pull the person_id from the current user
+                    $person = get_user();
+                    $clean['person_id'] = $person['person_id'];
+                }
+            }
+            elseif ($headers[$x] != "category")
+            {
+                $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
             }
         }
-        db_save_hours( $clean );
+
+        db_save_hours_check_duplicate( $clean );
 	    $hid = db_get_last_id( 'hours', 'hours_id' );
 	    $last_hours = db_get_hours( $hid );
 	    db_update_project( $last_hours['project_id'] );
@@ -64,7 +82,7 @@ function parse_csv($filename)
     fclose($GLOBALS['hours']);
 }
 
-function parseItem($dataType, $data) 
+function parseItem($dataType, $data, $filename) 
 {
     $clean = "";
     $data = str_replace("'", "''", $data);
@@ -80,7 +98,7 @@ function parseItem($dataType, $data)
             $tmp = db_get_project_id($data);
             if ( $tmp['project_id'] == -1 )
             {
-                parse_error("This project hasn't been added to the database: " . $data);
+                parse_error("This project hasn't been added to the database: " . $data, $filename);
             }
             else
             {
@@ -110,15 +128,16 @@ function parseItem($dataType, $data)
             //do nothing, we already have this information in the database, supposedly
             break;
         default:
-            parse_error("This type of heading is not allowed: " . $dataType);
+            parse_error("This type of heading is not allowed: " . $dataType, $filename);
             break;
     }
     return $clean;
 }
 
-function parse_error($err_msg)
+function parse_error($err_msg, $filename)
 {
     fclose($GLOBALS['hours']);
+    unlink($filename);
     die($err_msg);
 }
 ?>

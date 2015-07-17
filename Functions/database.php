@@ -24,7 +24,7 @@ function create_tables($databaseConnection)
     $databaseConnection->query($query_categories);
 
     $query_projects = "CREATE TABLE IF NOT EXISTS projects (project_id INT NOT NULL AUTO_INCREMENT, project_name VARCHAR(50), project_desc VARCHAR(500), active BOOLEAN DEFAULT TRUE, category_id INT, ";
-    $query_projects .=" last_worked DATE, last_worked_id INT NOT NULL, total_hours FLOAT NOT NULL DEFAULT 0, total_billable_hours FLOAT NOT NULL DEFAULT 0, ";
+    $query_projects .=" last_worked DATE, last_worked_id INT, total_hours FLOAT DEFAULT 0, total_billable_hours FLOAT DEFAULT 0, ";
     //We make foreign keys actually reference something so we don't get a project with a category id that doesn't exist
     $query_projects .= " PRIMARY KEY (project_id), FOREIGN KEY (category_id) REFERENCES categories(category_id), FOREIGN KEY (last_worked_id) REFERENCES people(person_id))";
     $databaseConnection->query($query_projects);
@@ -65,8 +65,6 @@ function db_save_category( $cat )
 	$databaseConnection->query($sql);
 }
 
-
-
 function db_save_hours( $hours )
 {
 	global $databaseConnection;
@@ -79,7 +77,18 @@ function db_save_hours( $hours )
 	}
 }
 
-
+function db_save_hours_check_duplicate( $hours )
+{
+	global $databaseConnection;
+	
+	$hours = prepare_hours( $hours );
+    $hours = db_find_duplicate_hours( $hours );
+	$sql = create_save_sql( 'hours', $hours, 'hours_id' );
+	if( !$databaseConnection->query($sql) )
+	{
+		show_mysql_error( $databaseConnection->error() );
+	}
+}
 
 function db_delete_person( $id )
 {
@@ -150,7 +159,7 @@ function db_get_person( $id )
 	$sql = "SELECT * FROM people WHERE person_id={$id}";
 	$res = $databaseConnection->query($sql);
 	
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
 		$row = array();
 		$row['person_id'] = -1;
@@ -175,7 +184,7 @@ function db_get_project( $id )
 	$sql = "SELECT * FROM projects WHERE project_id={$id}";
 	$res = $databaseConnection->query($sql);
 	
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
 		$row = array();
 		$row['project_id'] = -1;
@@ -200,7 +209,7 @@ function db_get_category( $id )
 	$sql = "SELECT * FROM categories WHERE category_id={$id}";
 	$res = $databaseConnection->query($sql);
 	
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
 		$row = array();
 		$row['category_id'] = -1;
@@ -257,7 +266,7 @@ function db_get_people_group( $group, $val )
 
 	$people = array();
 	
-    $sql = "SELECT * FROM people WHERE {$group} = {$val} ORDER BY person_lastname";
+    $sql = "SELECT * FROM people WHERE {$group} = {$val} ORDER BY person_lastname, person_firstname";
 	
     $res = $databaseConnection->query($sql);
 	while( $row = $res->fetch_assoc() )
@@ -396,8 +405,58 @@ function db_get_category_id( $name )
 		$row = $res->fetch_assoc();
 		$res->free();
 	}
-    print_r($row);
 	return $row;
+}
+
+//Will find and return the id of hours that match the date, project and person
+function db_find_duplicate_hours( $hours )
+{
+    global $databaseConnection;
+    /* If duplicates already exist, 
+    SELECT *, COUNT(*) AS times FROM hours GROUP BY date, project_id, person_id HAVING times>1 
+    will catch them, but we'll catch them before they get added!
+    */
+    $sql = 'SELECT * FROM hours';
+    $is_first = TRUE;
+    foreach ( $hours as $key => $val )
+    {
+        switch( $key )
+        {
+        case 'person_id':
+        case 'project_id':
+        case 'date': 
+        case 'task':
+            if (!$is_first)
+            {
+                $sql .= ' AND ';
+            }
+            if ($is_first)
+            { 
+                $sql .= ' WHERE ';
+                $is_first = FALSE;
+            }
+            $sql .= "{$key} = {$val}"; 
+            break;
+        }
+    }
+    $res = $databaseConnection->query($sql);
+    if ($res->num_rows > 0)
+    {
+        $row = $res->fetch_assoc();
+        $person_name = db_get_person($hours['person_id']);
+        $person_name = $person_name['person_firstname'].' '.$person_name['person_lastname'];
+        $project_name = db_get_project($hours['project_id']);
+        $project_name = $project_name['project_name'];
+        $alert_message = "Duplicate hours found: ". $hours['hours'] . " by " . $person_name . " on " . $hours['date']." for ".$project_name.". Overwriting...";
+        //$alert_message .= "Press OK to overwrite, press cancel to create a new entry.";
+?>
+        <script>
+            alert("<?php echo($alert_message); ?>");
+        </script>
+<?php
+        $hours['hours_id'] = $row['hours_id'];
+    }
+    return $hours;
 }
 
 
@@ -411,7 +470,7 @@ function prepare_project( $project )
 		{
 		case 'project_name':
 		case 'project_desc':
-			$clean[$key] = "'" . $val . "'";
+			$clean[$key] = "'" . str_replace("'", "''", $val) . "'";
 			break;
 			
 		case 'last_worked':
@@ -440,7 +499,7 @@ function prepare_category( $cat )
 		{
 		case 'category_name':
 		case 'category_desc':
-			$clean[$key] = "'" . $val . "'";
+			$clean[$key] = "'" . str_replace("'", "''", $val) . "'";
 			break;
 			
 		case 'category_id':
@@ -501,7 +560,7 @@ function prepare_hours( $hours )
 			break;
 			
 		case 'date':
-			$clean[$key] = "'" . date( "Y-m-d", strtotime( $val ) ) . " 1:00:00'";
+			$clean[$key] = "'" . date( "Y-m-d", strtotime( $val ) ) . " 00:00:00'";
 			break;
 		
         case 'billable':
@@ -521,7 +580,7 @@ function prepare_hours( $hours )
 
         case 'comments':
         case 'task':
-			$clean[$key] = "'" . $val . "'";
+			$clean[$key] = "'" . str_replace("'", "''", $val) . "'";
 		}
 	}
 	
@@ -638,6 +697,22 @@ function db_get_hours_in_range( $pid, $startdate, $enddate )
 	$sdate = date( "Y-m-d", $startdate );
 	$edate = date( "Y-m-d", $enddate );
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE person_id={$pid} AND hours.date>='{$sdate}' AND hours.date<='{$edate}' ORDER BY hours.date DESC";
+	$res = $databaseConnection->query($sql);
+	if( $err = mysqli_error() )
+	{
+		show_mysql_error( "$err: $sql" );
+	}
+	
+	return $res;
+}
+
+function db_get_hours_in_range_all( $startdate, $enddate )
+{
+    global $databaseConnection;
+	
+	$sdate = date( "Y-m-d", $startdate );
+	$edate = date( "Y-m-d", $enddate );
+	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE hours.date>='{$sdate}' AND hours.date<='{$edate}' ORDER BY hours.date DESC";
 	$res = $databaseConnection->query($sql);
 	if( $err = mysqli_error() )
 	{

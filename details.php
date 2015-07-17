@@ -23,7 +23,7 @@ $title = "Edit Hours";
 if( isset( $_REQUEST['add'] ) )
 {
 	unset( $_REQUEST['hours_id'] );
-	db_save_hours( $_REQUEST );
+	db_save_hours_check_duplicate( $_REQUEST );
 	$hid = db_get_last_id( 'hours', 'hours_id' );
 	$hours = db_get_hours( $hid );
 	db_update_project( $hours['project_id'] );
@@ -50,11 +50,24 @@ else if( isset( $_REQUEST['project_id'] ) )
 	{
 		db_update_project( $old_project_id );
 	}
+    redirect_by_url( "time.php" );
 }
 else if( isset( $_REQUEST['hours_id'] ) )
 {
 	$hid = $_REQUEST['hours_id'];
 	$hours = db_get_hours( $hid );
+    
+    //Check that it's a valid user trying to get to this hours log
+    $user = get_user();
+    if ( !($user['person_id']==$hours['person_id'] || is_admin()) )
+    {
+?>
+        <script>
+            alert("Sorry, you don't have access to this hours entry.");
+        </script>
+<?php
+        redirect_by_url("index.php");
+    }
 }
 else
 {
@@ -76,6 +89,7 @@ else
 print_header( $title );
 
 ?>
+
 
 <form action="details.php" method="post">
 <input type="hidden" name="hours_id" value="<?php echo $hours['hours_id'] ?>" />
@@ -100,7 +114,10 @@ print_header( $title );
 	</tr>
     <tr>
 		<td class="TableDataCaption">Billable?</td>
-		<td class="TableDataValue"><input name="billable" type="checkbox" value="1" <?php if($hours['billable'] == 1){ echo 'checked';} ?>></td>
+        <td>
+            <input name="billable" type="radio" value="1" <?php if($hours['billable'] == 1){ echo 'checked';} ?>>Yes</input>
+            <input name="billable" type="radio" value="0" <?php if(!($hours['billable'] == 1)){ echo 'checked';} ?>>No</input>
+        </td>
 	</tr>
     <tr>
 		<td class="TableDataCaption">Task</td>
