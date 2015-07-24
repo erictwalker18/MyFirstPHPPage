@@ -66,10 +66,38 @@ function parse_csv($filename)
                     $clean['person_id'] = $person['person_id'];
                 }
             }
-            elseif ($headers[$x] != "category")
+            //Default value for billable is from the project
+            else if ($headers[$x] == "project_id")
             {
                 $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
+                $proj = db_get_project($clean['project_id']);
+                if (!array_key_exists('billable', $clean) and array_key_exists('billable', $proj))
+                {
+                    $clean['billable'] = $proj['billable'];
+                }
             }
+            elseif ($headers[$x] != "category")
+            {
+                //Also making the billable default to the value from the project
+                if ($headers[$x] == 'billable' and array_key_exists('billable', $clean) and $clean['billable'] == 1)
+                {
+                     if ($currentData[$x] == 'No')
+                     {
+                         $clean[$headers[$x]] = 0;
+                     }
+                }
+                else
+                {
+                    $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
+                }
+            }
+        }
+
+        if ( !array_key_exists('person_id') )
+        {
+            //Pull the person_id from the current user
+            $person = get_user();
+            $clean['person_id'] = $person['person_id'];
         }
 
         db_save_hours_check_duplicate( $clean );

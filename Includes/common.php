@@ -155,6 +155,31 @@ function make_project_combo( $project_id, $combo_name = 'project_id' )
 	return $html;
 }
 
+function make_person_combo( $person_id, $combo_name = 'person_id' )
+{
+	$html = "<select name=\"{$combo_name}\">\n";
+	
+	global $databaseConnection;
+	$sql = "SELECT * FROM people ORDER BY person_lastname ASC, person_firstname ASC";
+	$res = $databaseConnection->query($sql);
+
+	while( $row = $res->fetch_assoc() )
+	{
+		if( $row['person_id'] == $person_id )
+		{
+			$html .= "<option selected value=\"{$row['person_id']}\">{$row['person_firstname']} {$row['person_lastname']}</option>\n";
+		}
+		else
+		{
+			$html .= "<option value=\"{$row['person_id']}\">{$row['person_firstname']} {$row['person_lastname']}</option>\n";
+		}
+	}
+	
+	
+	$html .= "</select>\n";
+	
+	return $html;
+}
 
 
 function make_project_list( $include_all_option = true, $rows = 10, $list_name = 'project_id' )

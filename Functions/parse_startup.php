@@ -4,7 +4,6 @@ $startup_file = NULL;
 
 function parse_csv($filename)
 {
-    echo "hiya";
     $GLOBALS['startup_file'] = fopen("$filename", "r") or die("Unable to open file!");
     $headers = fgetcsv($GLOBALS['startup_file']);
     $acceptedHeaders = array("project_name", "category_id", "project_desc", "active");
@@ -48,9 +47,6 @@ function parse_csv($filename)
         for ($x=0; $x < sizeof($headers); $x++) {
             $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x]);
         }
-        echo "Trying to save a project: ";
-        print_r($clean);
-        echo "<br>";
         db_save_project( $clean );
     } 
     fclose($GLOBALS['startup_file']);

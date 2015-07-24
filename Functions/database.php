@@ -24,7 +24,7 @@ function create_tables($databaseConnection)
     $databaseConnection->query($query_categories);
 
     $query_projects = "CREATE TABLE IF NOT EXISTS projects (project_id INT NOT NULL AUTO_INCREMENT, project_name VARCHAR(50), project_desc VARCHAR(500), active BOOLEAN DEFAULT TRUE, category_id INT, ";
-    $query_projects .=" last_worked DATE, last_worked_id INT, total_hours FLOAT DEFAULT 0, total_billable_hours FLOAT DEFAULT 0, ";
+    $query_projects .=" last_worked DATE, last_worked_id INT, total_hours FLOAT DEFAULT 0, total_billable_hours FLOAT DEFAULT 0, billable BOOLEAN DEFAULT 0, ";
     //We make foreign keys actually reference something so we don't get a project with a category id that doesn't exist
     $query_projects .= " PRIMARY KEY (project_id), FOREIGN KEY (category_id) REFERENCES categories(category_id), FOREIGN KEY (last_worked_id) REFERENCES people(person_id))";
     $databaseConnection->query($query_projects);
@@ -480,6 +480,7 @@ function prepare_project( $project )
 		case 'project_id':
 		case 'category_id':
         case 'active':
+        case 'billable':
 			$clean[$key] = $val;
 		}	
 	}
@@ -717,6 +718,51 @@ function db_get_hours_in_range_all( $startdate, $enddate )
 	if( $err = mysqli_error() )
 	{
 		show_mysql_error( "$err: $sql" );
+	}
+	
+	return $res;
+}
+
+function db_get_hours_for_blank( $blank )
+{
+    global $databaseConnection;
+
+    if (is_null($blank))
+    {
+        $sql = "SELECT * FROM hours ORDER BY hours.date DESC";
+    }
+    else
+    {
+        $is_first = TRUE;
+        $sql = "SELECT * FROM hours WHERE ";
+        foreach ($blank as $key=>$val)
+        {
+            if (!$is_first)
+            {
+                $sql .= " AND ";
+            }
+            switch ( $key )
+            {
+                case 'startdate':
+                    $sdate = date( "Y-m-d", $val );
+                    $sql .= "hours.date>='{$sdate}'";
+                    break;
+                case 'enddate':
+	                $edate = date( "Y-m-d", $val );
+                    $sql .= "hours.date<='{$edate}'";
+                    break;
+                case 'person_id':
+                case 'project_id':
+                    $sql .= "hours." . $key . " = " . "'{$val}'";
+            }
+        }
+        $sql .= " ORDER BY hours.date DESC";
+    }
+
+    $res = $databaseConnection->query($sql);
+	if( !$res )
+	{
+		show_mysql_error( $databaseConnection->error() );
 	}
 	
 	return $res;

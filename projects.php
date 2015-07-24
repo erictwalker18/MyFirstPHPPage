@@ -10,6 +10,7 @@ $project['project_name'] = '';
 $project['project_desc'] = '';
 $project['active'] = 1;
 $project['category_id'] = 0;
+$project['billable'] = 0;
 
 if( isset( $_REQUEST['add'] ) )
 {
@@ -165,6 +166,13 @@ else
                 <input name="active" type="radio" value="0" <?php if(!($project['active'] == 1)){ echo 'checked';} ?>>No</input>
             </td>
 		</tr>
+        <tr>
+		    <td style="vertical-align: top">Billable?</td>
+            <td>
+                <input name="billable" type="radio" value="1" <?php if($project['billable'] == 1){ echo 'checked';} ?>>Yes</input>
+                <input name="billable" type="radio" value="0" <?php if(!($proejct['billable'] == 1)){ echo 'checked';} ?>>No</input>
+            </td>
+	    </tr>
 	</table>
 	<br>
 	
