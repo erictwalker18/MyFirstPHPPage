@@ -17,7 +17,7 @@ if( isset( $_REQUEST['add'] ) )
 	unset( $cat['add'] );
 	
 	db_save_category( $cat );
-
+	$cat['category_id'] = db_get_last_id('categories', 'category_id');
     //Update the template file
     save_new_category($cat['category_name'], $cat['category_desc']);
 

@@ -170,7 +170,7 @@ else
 		    <td style="vertical-align: top">Billable?</td>
             <td>
                 <input name="billable" type="radio" value="1" <?php if($project['billable'] == 1){ echo 'checked';} ?>>Yes</input>
-                <input name="billable" type="radio" value="0" <?php if(!($proejct['billable'] == 1)){ echo 'checked';} ?>>No</input>
+                <input name="billable" type="radio" value="0" <?php if(!($project['billable'] == 1)){ echo 'checked';} ?>>No</input>
             </td>
 	    </tr>
 	</table>

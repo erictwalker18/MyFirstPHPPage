@@ -2,6 +2,8 @@
 require_once ("database.php");
 require_once ("/Includes/common.php");
 
+date_default_timezone_set('America/Denver');
+
 $hours = NULL;
 
 function parse_csv($filename)
@@ -37,6 +39,10 @@ function parse_csv($filename)
         $currentData = fgetcsv($GLOBALS['hours']);
         $isNull = TRUE;
         //Checking for null values that are common at the end of the template file
+		if ($currentData == null)
+		{
+			continue;
+		}
         foreach ($currentData as $key => $val)
         {
             if( !($val == '') )
@@ -93,7 +99,7 @@ function parse_csv($filename)
             }
         }
 
-        if ( !array_key_exists('person_id') )
+        if ( !array_key_exists('person_id', $clean) )
         {
             //Pull the person_id from the current user
             $person = get_user();
@@ -101,6 +107,7 @@ function parse_csv($filename)
         }
 
         db_save_hours_check_duplicate( $clean );
+		//db_save_hours( $clean );
 	    $hid = db_get_last_id( 'hours', 'hours_id' );
 	    $last_hours = db_get_hours( $hid );
 	    db_update_project( $last_hours['project_id'] );
@@ -138,7 +145,7 @@ function parseItem($dataType, $data, $filename)
             $clean = db_get_person_id($firstname, $lastname);
             if ( $clean == NULL )
             {
-                parse_error("This person has not been added to the database: " . $firstname . " " . $lastname);
+                parse_error("This person has not been added to the database: " . $firstname . " " . $lastname, $filename);
             }
             break;
         case "hours":

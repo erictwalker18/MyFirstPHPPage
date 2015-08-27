@@ -14,6 +14,8 @@ function prep_DB_content ()
     There are 4 tables: people, categories, projects, and hours. This was chosen because we don't want to have to excessively repeat data
     when we don't have to. See below for the things stored in each table.
 */
+//This function only actually does something on the startup of the database or some sort of reset
+//The sql code to create was included for use in future reinstalls of the system
 function create_tables($databaseConnection)
 {
     $query_people = "CREATE TABLE IF NOT EXISTS people (person_id INT NOT NULL AUTO_INCREMENT, person_lastname VARCHAR(50), person_firstname VARCHAR(50), username VARCHAR(50), password CHAR(40), ";
@@ -73,7 +75,7 @@ function db_save_hours( $hours )
 	$sql = create_save_sql( 'hours', $hours, 'hours_id' );
 	if( !$databaseConnection->query($sql) )
 	{
-		show_mysql_error( $databaseConnection->error() );
+		show_mysql_error( $databaseConnection->error );
 	}
 }
 
@@ -86,7 +88,7 @@ function db_save_hours_check_duplicate( $hours )
 	$sql = create_save_sql( 'hours', $hours, 'hours_id' );
 	if( !$databaseConnection->query($sql) )
 	{
-		show_mysql_error( $databaseConnection->error() );
+		show_mysql_error( $databaseConnection->error );
 	}
 }
 
@@ -134,7 +136,7 @@ function db_get_last_id( $table, $idfield )
 {
     global $databaseConnection;
 	
-	$sql = "SELECT * FROM {$table} ORDER BY {$idfield} DESC";
+	$sql = "SELECT * FROM {$table} ORDER BY {$idfield} DESC LIMIT 1";
 	$res = $databaseConnection->query($sql);
 	$row = $res->fetch_assoc();
 	$res->free();
@@ -303,6 +305,7 @@ function db_get_projects_in_category( $category_id )
 	
 	$sql = "SELECT * FROM projects WHERE category_id={$category_id} ORDER BY project_name";
 	$res = $databaseConnection->query($sql);
+	
 	while( $row = $res->fetch_assoc() )
 	{
 		$projects[$row['project_id']] = $row;
@@ -393,7 +396,7 @@ function db_get_category_id( $name )
 	
 	$sql = "SELECT * FROM categories WHERE category_name='{$name}'";
 	$res = $databaseConnection->query($sql);
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
 		$row = array();
 		$row['category_id'] = -1;
@@ -426,6 +429,7 @@ function db_find_duplicate_hours( $hours )
         case 'project_id':
         case 'date': 
         case 'task':
+		case 'comments':
             if (!$is_first)
             {
                 $sql .= ' AND ';
@@ -682,8 +686,9 @@ function db_get_hours_for_person( $pid )
 	
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE person_id={$pid} ORDER BY hours.date DESC";
 	$res = $databaseConnection->query($sql);
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
+		$err = $databaseConnection->error;
 		show_mysql_error( "$err: $sql" );
 	}
 	
@@ -699,8 +704,9 @@ function db_get_hours_in_range( $pid, $startdate, $enddate )
 	$edate = date( "Y-m-d", $enddate );
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE person_id={$pid} AND hours.date>='{$sdate}' AND hours.date<='{$edate}' ORDER BY hours.date DESC";
 	$res = $databaseConnection->query($sql);
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
+		$err = $databaseConnection->error;
 		show_mysql_error( "$err: $sql" );
 	}
 	
@@ -715,8 +721,9 @@ function db_get_hours_in_range_all( $startdate, $enddate )
 	$edate = date( "Y-m-d", $enddate );
 	$sql = "SELECT * FROM hours INNER JOIN projects ON hours.project_id = projects.project_id WHERE hours.date>='{$sdate}' AND hours.date<='{$edate}' ORDER BY hours.date DESC";
 	$res = $databaseConnection->query($sql);
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
+		$err = $databaseConnection->error;
 		show_mysql_error( "$err: $sql" );
 	}
 	
@@ -729,7 +736,7 @@ function db_get_hours_for_blank( $blank )
 
     if (is_null($blank))
     {
-        $sql = "SELECT * FROM hours ORDER BY hours.date DESC";
+        $sql = "SELECT * FROM hours ORDER BY hours.date DESC LIMIT 100";
     }
     else
     {
@@ -741,6 +748,7 @@ function db_get_hours_for_blank( $blank )
             {
                 $sql .= " AND ";
             }
+			$is_first = FALSE;
             switch ( $key )
             {
                 case 'startdate':
@@ -762,7 +770,7 @@ function db_get_hours_for_blank( $blank )
     $res = $databaseConnection->query($sql);
 	if( !$res )
 	{
-		show_mysql_error( $databaseConnection->error() );
+		show_mysql_error( $databaseConnection->error );
 	}
 	
 	return $res;
@@ -778,7 +786,7 @@ function db_get_hours( $hours_id )
 	if( !($res = $databaseConnection->query($sql)) )
 	{
 		$row = array();
-		show_mysql_error( $databaseConnection->error() );
+		show_mysql_error( $databaseConnection->error );
 	}
 	else
 	{
@@ -799,8 +807,9 @@ function db_get_category_array()
 	
 	$cats = array();
 	
-	if( $err = mysqli_error() )
+	if( !$res )
 	{
+		$err = $databaseConnection->error;
 		show_mysql_error( "$err: $sql" );
 	}
 	else
@@ -830,36 +839,40 @@ function db_update_project( $id )
     global $databaseConnection;
 
 	$total_hours = 0;
+	$billable_hours = 0;
 	
-	$sql = "SELECT * FROM hours WHERE project_id={$id} ORDER BY date DESC";
+	$sql = "SELECT * FROM hours WHERE project_id={$id} ORDER BY date DESC LIMIT 1";
 
 	if( !($res = $databaseConnection->query($sql )) )
 	{
-		show_mysql_error($databaseConnection->error() );
+		show_mysql_error($databaseConnection->error );
 	}
+	
+	$sql2 = "SELECT * FROM projects WHERE project_id={$id}";
+	if( !($res2 = $databaseConnection->query($sql2)) )
+	{
+		show_mysql_error($databaseConnection->error );
+	}
+	$row2 = $res2->fetch_assoc();
+	
+	$total_hours += $row2['total_hours'];
+    $billable_hours += $row2['total_billable_hours'];
 	
 	if( $row = $res->fetch_assoc() )
 	{
 		$total_hours += $row['hours'];
+		$billable_hours += $row['billable_hours'];
 		$sql = "UPDATE projects SET last_worked='{$row['date']}', last_worked_id={$row['person_id']}, ";
 	}
 	else
 	{
 		$total_hours = 0;
+		$billable_hours = 0;
 		$sql = "UPDATE projects SET last_worked='0-0-0', last_worked_id=0, ";
 	}
 	
-	while( $row = $res->fetch_assoc() )
-	{
-		$total_hours += $row['hours'];
-        $billable_hours += $row['billable_hours'];
-	}
 	$sql .= "total_hours={$total_hours}, total_billable_hours={$billable_hours} WHERE project_id={$id}";
 	$databaseConnection->query($sql);
-	if( $err = mysqli_error() )
-	{
-		show_mysql_error( "$err: $sql" );
-	}
 }
 
 ?>

@@ -4,6 +4,8 @@ session_start();
 include_once( "/Functions/database.php" );
 require_once( "connectDB.php" );
 
+date_default_timezone_set('America/Denver');
+
 $GLOBALS['cookie_name'] = "timecard_v2";
 $GLOBALS['user'] = array();
 $GLOBALS['user']['loggedin'] = FALSE;

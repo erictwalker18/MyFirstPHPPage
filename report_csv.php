@@ -3,6 +3,8 @@
 include_once( 'Includes/common.php' );
 include_once( 'Functions/database.php' );
 
+date_default_timezone_set('America/Denver');
+
 $start = strtotime( $_REQUEST['start'] );
 $end = strtotime( $_REQUEST['end'] );
 

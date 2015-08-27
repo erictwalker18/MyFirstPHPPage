@@ -21,6 +21,7 @@ print_header("Edit Hours");
 
 date_default_timezone_set('America/Denver');
 $now = getdate();
+$params = null;
 
 if( isset( $_POST['month'] ) )
 {
@@ -29,6 +30,10 @@ if( isset( $_POST['month'] ) )
     $edate = mktime( 0, 0, 0, $now['mon'] + $month + 1, 0, $now['year'] );
     $params['startdate'] = $sdate;
     $params['enddate'] = $edate;
+}
+else
+{
+	$month = $now['month'];
 }
 if( isset( $_POST['person_id'] ) )
 {
@@ -96,10 +101,11 @@ if ( is_admin() )
 <?php
 $res = db_get_hours_for_blank( $params );
 
-while( $row = $res->fetch_assoc() )
+while( $res != null  && $row = $res->fetch_assoc() )
 {
     $person_name = db_get_person($row['person_id']);
     $person_name = $person_name['person_lastname']. ', ' .$person_name['person_firstname'];
+	$row['project_name'] = db_get_project($row['project_id'])['project_name'];
 	?>
 	<div class="DataRow">
     <div class="DataValue"><input type="checkbox" name="formCheck[]" value="<?php echo $row['hours_id'] ?>" /></div>

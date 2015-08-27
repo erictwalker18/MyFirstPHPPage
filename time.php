@@ -46,11 +46,6 @@ $sdate = mktime( 0, 0, 0, $now['mon'] + $month - 1, 1, $now['year'] );
 $edate = mktime( 0, 0, 0, $now['mon'] + $month + 1, 0, $now['year'] );
 $res = db_get_hours_in_range( $pid, $sdate, $edate );
 
-if( $err = mysql_error() )
-{
-	echo $err;
-}
-
 while( $row = $res->fetch_assoc() )
 {
 	?>

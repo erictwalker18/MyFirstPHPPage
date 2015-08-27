@@ -8,6 +8,7 @@ $list = false;
 $person = array();
 $person['person_firstname'] = '';
 $person['person_lastname'] = '';
+$person['username'] = '';
 $person['person_id'] = -1;
 $person['current_project_id'] = 0;
 $person['active'] = 0;
@@ -30,7 +31,8 @@ if( isset( $_REQUEST['add'] ) )
 	unset( $person['person_id'] );
 	unset( $person['add'] );
 	db_save_person( $person );
-
+	
+	$person['person_id'] = db_get_last_id('people', 'person_id');
     //Update the template file
     save_new_person( $person['person_lastname'] . ', ' . $person['person_firstname'] );
 

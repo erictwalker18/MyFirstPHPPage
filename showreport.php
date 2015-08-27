@@ -4,6 +4,8 @@ include_once( 'Includes/common.php' );
 
 print_header( 'Report' );
 
+date_default_timezone_set('America/Denver');
+
 $allprojects = false;
 $projects = array();
 

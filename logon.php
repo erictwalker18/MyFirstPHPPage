@@ -2,8 +2,9 @@
     require_once ("Includes/common.php");
     require_once ("Includes/simpledb-config.php"); 
     require_once ("Includes/connectDB.php");
-    include("Includes/header.php");
-
+    //include("Includes/header.php");
+	print_header("");
+	
     if (isset($_POST['submit']))
     {
         $username = $_POST['username'];
