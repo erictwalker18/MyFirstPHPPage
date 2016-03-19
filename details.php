@@ -106,7 +106,7 @@ print_header( $title );
 	</tr>
 	<tr>
 		<td class="TableDataCaption">Project</td>
-		<td class="TableDataValue"><?php echo make_project_combo( $hours['project_id'] ) ?></td>
+		<td class="TableDataValue"><?php echo make_project_combo( $hours['project_id'] ) ?></td>        
 	</td>
 	<tr>
 		<td class="TableDataCaption">Hours</td>
@@ -144,7 +144,9 @@ else
 ?>
 
 </form>
-
+<script type="text/javascript">
+    //alert(document.forms[0].elements[4]);
+</script>
 <?php
 
 print_footer();
