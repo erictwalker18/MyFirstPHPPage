@@ -81,14 +81,34 @@ print_header( 'Reports' );
 	<tr>
 		<td class="ReportTypeBox" style = "width: 350px; vertical-align: top">
 			<div class="ReportTypeBoxHeader">
-			Project Detail Report
+			Project Detail Report 
+            <?php
+            if ( !isset($_REQUEST['all']) )
+            {
+	        ?>
+            <a href="report.php?all" style="float: right;">All Projects</a>
+            <?php
+            }
+            else
+            {
+            ?>
+            <a href="report.php" style="float: right;">Active Projects</a>
+            <?php
+            }                 
+            ?>
 			</div>
 			<div class="ReportTypeDetails">
 			<form action="report_detail.php" method="get" target="_new">
 			<table border="0" ><!--cellspacing="0"-->
 				<tr>
-					<td class="TableDataCaption">Category</td>
-					<td class="TableDataValue"><?php echo make_project_combo( 0 ) ?></td>
+					<td class="TableDataCaption">Project</td>
+					<td class="TableDataValue"><?php
+                    if (!isset($_REQUEST['all'])) {
+                        echo make_project_combo_active( 0 );
+                    }
+                    else{
+                        echo make_project_combo(0);
+                    } ?></td>
 				</tr>
 				<tr>
 					<td class="TableDataCaption">Start Date</td>
