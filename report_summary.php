@@ -69,6 +69,7 @@ foreach( $people as $id => $person )
 
 	<?php
 	$total = 0;
+    $total_billable = 0;
 	foreach( $cats as $category_id => $cat )
 	{
 		$sql = "SELECT SUM(hours.hours) AS total, SUM(hours.billable_hours) AS total_billable FROM hours INNER JOIN projects ON hours.project_id = projects.project_id INNER JOIN categories on projects.category_id = categories.category_id WHERE person_id={$id} AND categories.category_id = {$category_id} AND hours.date >= '{$sstart}' AND hours.date <= '{$send}'";
@@ -97,7 +98,7 @@ foreach( $people as $id => $person )
 			if( isset( $row['total_billable'] ) )
 			{
 				echo $row['total_billable'];
-				$total += $row['total_billable'];
+				$total_billable += $row['total_billable'];
 			}
 			else
 			{
@@ -111,6 +112,7 @@ foreach( $people as $id => $person )
 	}
 	?>
 	<div class="ReportBottomRow">
+    <div class="ReportColumnSmall"><b><?php echo $total_billable ?></b></div>
 	<div class="ReportColumnSmall"><b><?php echo $total ?></b></div>
 	<div class="ReportFirstColumn"><b>Total Hours</b></div>
 	</div>
