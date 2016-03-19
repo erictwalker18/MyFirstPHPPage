@@ -1,11 +1,8 @@
 <?php
 require_once ("database.php");
 require_once ("/Includes/common.php");
-
 date_default_timezone_set('America/Denver');
-
 $hours = NULL;
-
 function parse_csv($filename)
 {
     $GLOBALS['hours'] = fopen("$filename", "r") or die("Unable to open file!");
@@ -55,48 +52,12 @@ function parse_csv($filename)
         {
             break;
         }
-        $clean = array();
-        for ($x=0; $x < sizeof($headers); $x++) {
-            if ($headers[$x] == "person_id")
-            {
-                //Check for a name given, if there is one, then use that
-                if ($currentData[$x] != '')
-                {
-                    $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
-                }
-                //Otherwise, pull the name from the session
-                else
-                {
-                    //Pull the person_id from the current user
-                    $person = get_user();
-                    $clean['person_id'] = $person['person_id'];
-                }
-            }
-            //Default value for billable is from the project
-            else if ($headers[$x] == "project_id")
-            {
-                $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
-                $proj = db_get_project($clean['project_id']);
-                if (!array_key_exists('billable', $clean) and array_key_exists('billable', $proj))
-                {
-                    $clean['billable'] = $proj['billable'];
-                }
-            }
-            elseif ($headers[$x] != "category")
-            {
-                //Also making the billable default to the value from the project
-                if ($headers[$x] == 'billable' and array_key_exists('billable', $clean) and $clean['billable'] == 1)
-                {
-                     if ($currentData[$x] == 'No')
-                     {
-                         $clean[$headers[$x]] = 0;
-                     }
-                }
-                else
-                {
-                    $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
-                }
-            }
+        //Go through the row and parse each item
+        $clean=parse_row($headers, $currentData, $filename);
+        //If there was an error, we're going to skip that row
+        if (sizeof($clean)<1) 
+        {
+            continue;
         }
 
         if ( !array_key_exists('person_id', $clean) )
@@ -105,7 +66,6 @@ function parse_csv($filename)
             $person = get_user();
             $clean['person_id'] = $person['person_id'];
         }
-
         db_save_hours_check_duplicate( $clean );
 		//db_save_hours( $clean );
 	    $hid = db_get_last_id( 'hours', 'hours_id' );
@@ -117,11 +77,75 @@ function parse_csv($filename)
     fclose($GLOBALS['hours']);
 }
 
+function parse_row($headers, $currentData, $filename) 
+{   
+    //Go through the row and parse each item
+    $clean = array();
+    for ($x=0; $x < sizeof($headers); $x++) 
+    {
+        if ($headers[$x] == "person_id")
+        {
+            //Check for a name given, if there is one, then use that
+            if ($currentData[$x] != '')
+            {
+                $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
+                
+                //If we couldn't find that person, they haven't been added, so we're skipping the entry.
+                if ($clean[$headers[$x]]=="")
+                {
+                    $clean = array();
+                    return $clean;
+                }
+            }
+            //Otherwise, pull the name from the session
+            else
+            {
+                //Pull the person_id from the current user
+                $person = get_user();
+                $clean['person_id'] = $person['person_id'];
+            }
+        }
+        //Default value for billable is from the project
+        else if ($headers[$x] == "project_id")
+        {
+            $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
+            //If we couldn't find that project, it hasn't been added, so we're skipping this entry.
+            if ($clean[$headers[$x]]=="") 
+            {
+                $clean = array();
+                return $clean;
+            }
+            $proj = db_get_project($clean['project_id']);
+            if (!array_key_exists('billable', $clean) and array_key_exists('billable', $proj))
+            {
+                $clean['billable'] = $proj['billable'];
+            }
+        }
+        elseif ($headers[$x] != "category")
+        {
+            //Also making the billable default to the value from the project
+            if ($headers[$x] == 'billable' and array_key_exists('billable', $clean) and $clean['billable'] == 1)
+            {
+                    if ($currentData[$x] == 'No')
+                    {
+                        $clean[$headers[$x]] = 0;
+                    }
+            }
+            else
+            {
+                $clean[$headers[$x]] = parseItem($headers[$x], $currentData[$x], $filename);
+            }
+        }
+    }
+    return $clean;
+}
+
 function parseItem($dataType, $data, $filename) 
 {
     $clean = "";
     $data = str_replace("'", "''", $data);
-    switch ($dataType) {
+    switch ($dataType) 
+    {
         case "date":
             //$clean[$key] = "'" . date( "Y-m-d", strtotime( $val ) ) . " 1:00:00'";?
             $fullData = explode('/',$data);
@@ -133,7 +157,7 @@ function parseItem($dataType, $data, $filename)
             $tmp = db_get_project_id($data);
             if ( $tmp['project_id'] == -1 )
             {
-                parse_error("This project hasn't been added to the database: " . $data, $filename);
+                echo "This project hasn't been added to the database: " . $data.". Skipping all entries with this project.<br>";
             }
             else
             {
@@ -145,7 +169,7 @@ function parseItem($dataType, $data, $filename)
             $clean = db_get_person_id($firstname, $lastname);
             if ( $clean == NULL )
             {
-                parse_error("This person has not been added to the database: " . $firstname . " " . $lastname, $filename);
+                echo "This person has not been added to the database: " . $firstname . " " . $lastname.". Skipping all entries with this person.<br>";
             }
             break;
         case "hours":

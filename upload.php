@@ -34,7 +34,7 @@ if ($uploadOk == 0) {
         echo "The file ". basename( $_FILES["fileToUpload"]["name"]). " has been uploaded.<br>";
         //parse, then delete
 		set_time_limit(120);
-        parse_csv($target_file);
+        echo parse_csv($target_file);
         unlink($target_file);
         echo "Hours have been added.<br>";
     } else {
