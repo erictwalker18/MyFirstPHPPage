@@ -348,7 +348,7 @@ aside {
 	padding-bottom: 2px;
 	border-bottom: 1px solid #aaaaaa;
     border-collapse: separate;
-	height: auto;
+    height: 15px;
 }
 .DataValue
 {

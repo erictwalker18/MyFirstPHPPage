@@ -198,7 +198,6 @@ function db_get_project( $id )
 		$row = $res->fetch_assoc();
 		$res->free();
 	}
-
 	return $row;
 }
 

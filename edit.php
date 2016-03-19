@@ -105,7 +105,8 @@ while( $res != null  && $row = $res->fetch_assoc() )
 {
     $person_name = db_get_person($row['person_id']);
     $person_name = $person_name['person_lastname']. ', ' .$person_name['person_firstname'];
-	$row['project_name'] = db_get_project($row['project_id'])['project_name'];
+    $project_row= db_get_project($row['project_id']);
+	$row['project_name'] = $project_row['project_name'];
 	?>
 	<div class="DataRow">
     <div class="DataValue"><input type="checkbox" name="formCheck[]" value="<?php echo $row['hours_id'] ?>" /></div>
