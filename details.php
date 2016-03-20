@@ -144,9 +144,6 @@ else
 ?>
 
 </form>
-<script type="text/javascript">
-    //alert(document.forms[0].elements[4]);
-</script>
 <?php
 
 print_footer();
